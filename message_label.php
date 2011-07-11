@@ -233,12 +233,14 @@ class message_label extends rcube_plugin
       $this->rc->output->show_message('searchnomatch', 'notice');
     }
 
-    // update message count display
+    // update message count display and reset threads
     $this->rc->output->set_env('search_request', "labelsearch");
     $this->rc->output->set_env('messagecount', $count);
     $this->rc->output->set_env('pagecount', ceil($count/$this->rc->imap->page_size));
+    $this->rc->output->set_env('threading', (bool)false);
+    $this->rc->output->set_env('threads', 0);
+
     $this->rc->output->command('set_rowcount', rcmail_get_messagecount_text($count, $page));
-    $this->rc->output->command('init_threads', array());
 
     $this->rc->output->send();
     exit;
