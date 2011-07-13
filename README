@@ -4,6 +4,7 @@ Itroduction
 ----------------------------------------
 Tis is plugin for roundcube :)
 
+To install. Patch app.js file from patch.diff
 
 Contact
 ----------------------------------------

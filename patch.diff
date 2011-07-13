@@ -1,0 +1,12 @@
+--- app.js	2011-07-13 13:03:47.258132296 +0400
++++ app.js	2011-07-13 13:07:04.813669180 +0400
+@@ -1460,6 +1460,9 @@
+ 
+   this.msglist_select = function(list)
+   {
++    // trigger hook
++    this.triggerEvent('pre_msglist_select', { list:list });
++
+     if (this.preview_timer)
+       clearTimeout(this.preview_timer);
+     if (this.preview_read_timer)
