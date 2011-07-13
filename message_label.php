@@ -612,13 +612,16 @@ class message_label extends rcube_plugin
    */
   function label_preferences($args) {
     if($args['section'] == 'label_preferences') {
-      $rcmail = rcmail::get_instance();
+
+      $this->rc = rcmail::get_instance();
+      $this->rc->imap_connect();
 
       $args['blocks']['create_label'] =  array('options' => array(), 'name' => Q($this->gettext('label_create')));
       $args['blocks']['list_label'] =  array('options' => array(), 'name' => Q($this->gettext('label_title')));
 
       $i = 0;
-      $prefs = $rcmail->config->get('message_label', array());
+      $prefs = $this->rc->config->get('message_label', array());
+
 
       //insert empty row
       $args['blocks']['create_label']['options'][$i++] = array('title' => '', 'content' => $this->get_form_row());
@@ -633,6 +636,7 @@ class message_label extends rcube_plugin
     return($args);
   }
 
+
   /**
    * Create row label
    *
@@ -645,7 +649,7 @@ class message_label extends rcube_plugin
     if (!$text) $text = Q($this->gettext('label_name'));
     //if (!$input) $input = Q($this->gettext('label_matches'));
     if (!$id) $id = uniqid();
-
+    if (!$folder) $folder = 'all';
     // header select box
     $header_select = new html_select(array('name' => '_label_header[]', 'class' => 'label_header'));
     $header_select->add(Q($this->gettext('subject')), 'subject');
@@ -655,18 +659,24 @@ class message_label extends rcube_plugin
 
     // folder search select
     $folder_search = new html_select(array('name' => '_folder_search[]', 'class' => 'folder_search'));
-    $rcmail = rcmail::get_instance();
-    $rcmail->imap_connect();
+
+    $p = array('maxlength' => 100, 'realnames' => false);
 
     // get mailbox list
-    $mail_folders = $rcmail->imap->list_mailboxes();
-    //print_r($mail_folders);
+    $mbox_name = $this->rc->imap->get_mailbox_name();
+
+    // build the folders tree
+    // get mailbox list
+    $a_folders = $this->rc->imap->list_mailboxes();
+    $delimiter = $this->rc->imap->get_hierarchy_delimiter();
+    $a_mailboxes = array();
+
+    foreach ($a_folders as $folder_list)
+      rcmail_build_folder_tree($a_mailboxes, $folder_list, $delimiter);
 
     $folder_search->add(Q($this->gettext('label_all')), 'all');
 
-    foreach($mail_folders as $mbox) {
-        $folder_search->add(Q(rcube_charset_convert($mbox, 'UTF7-IMAP')), $mbox);
-    }
+    rcmail_render_folder_tree_select($a_mailboxes, $mbox, $p['maxlength'], $folder_search, $p['realnames']);
 
     // input field
     $input = new html_inputfield(array('name' => '_label_input[]', 'type' => 'text', 'autocomplete' => 'off', 'class' => 'watermark linput', 'value' => $input));
