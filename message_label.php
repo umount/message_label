@@ -1,9 +1,10 @@
 <?php
 
 /**
-* @version 0.1
-* @author Denis Sobolev
-*/
+ * @version 0.2
+ * @author Denis Sobolev <dns.sobol@gmail.com>
+ *
+ */
 
 class message_label extends rcube_plugin
 {
@@ -36,6 +37,8 @@ class message_label extends rcube_plugin
     $this->register_action('plugin.message_label_move', array($this, 'message_label_move'));
     $this->register_action('plugin.message_label_delete', array($this, 'message_label_delete'));
     $this->register_action('plugin.not_label_folder_search', array($this, 'not_label_folder_search'));
+
+    $this->register_action('plugin.message_label.check_mode', array($this, 'action_check_mode'));
 
     $this->include_script('message_label.js');
     $this->include_script('colorpicker/mColorPicker.js');
@@ -589,9 +592,8 @@ class message_label extends rcube_plugin
    * @access  public
    */
   function folder_list_label($args) {
-    $rcmail = rcmail::get_instance();
     $args['content'] .= html::div(array('id'=>'mailboxlist-title', 'class'=>'boxtitle label_header_menu'), $this->gettext('label_title'));
-    $prefs = $rcmail->config->get('message_label', array());
+    $prefs = $this->rc->config->get('message_label', array());
     if (count($prefs) > 0)
       foreach($prefs as $p) {
         $args['content'] .= html::div('lmenu',
@@ -601,6 +603,10 @@ class message_label extends rcube_plugin
       }
     else
       $args['content'] .= html::div('lmenu',html::a(array('href'=>'#','onclick'=>'return rcmail.command(\'plugin.label_redirect\',\'true\',true)'),$this->gettext('label_create')));
+
+    $mode = $this->rc->config->get('message_label_mode');
+    if (empty($mode)) $mode = 'labels';
+    $this->rc->output->set_env('message_label_mode', $mode);
 
     return $args;
   }
@@ -616,12 +622,25 @@ class message_label extends rcube_plugin
       $this->rc = rcmail::get_instance();
       $this->rc->imap_connect();
 
+      $args['blocks']['select_mode'] = array('options' => array(), 'name' => Q($this->gettext('label_mode')));
+
+      $radio = new html_radiobutton(array('name' => 'select_mode'));
+
+      $mode = $this->rc->config->get('message_label_mode');
+      if (empty($mode)) $mode = 'labels';
+
+      $selector = $radio->show($mode, array('value' => 'labels', 'onclick' => 'return rcmail.command(\'plugin.message_label.check_mode\', \'labels\')')). Q($this->gettext('labels'));
+      $selector .= $radio->show($mode, array('value' => 'highlighting', 'onclick' => 'return rcmail.command(\'plugin.message_label.check_mode\', \'highlighting\')')). Q($this->gettext('highlighting'));
+
+      $args['blocks']['select_mode']['options'][0] = array('title' => '', 'content' => $selector);
+
+      $mode = $this->rc->config->get('message_label_mode');
+
       $args['blocks']['create_label'] =  array('options' => array(), 'name' => Q($this->gettext('label_create')));
       $args['blocks']['list_label'] =  array('options' => array(), 'name' => Q($this->gettext('label_title')));
 
       $i = 0;
       $prefs = $this->rc->config->get('message_label', array());
-
 
       //insert empty row
       $args['blocks']['create_label']['options'][$i++] = array('title' => '', 'content' => $this->get_form_row());
@@ -751,5 +770,24 @@ class message_label extends rcube_plugin
     $args['prefs']['message_label'] = $prefs;
     return($args);
   }
+
+  function action_check_mode(){
+    $check = get_input_value('_check', RCUBE_INPUT_POST);
+    $this->rc = rcmail::get_instance();
+
+    $mode = $this->rc->config->get('message_label_mode');
+
+    if ($check == 'highlighting') {
+      $this->rc->user->save_prefs(array('message_label_mode' => 'highlighting'));
+      $this->rc->output->command('display_message', $this->gettext('check_highlighting'), 'confirmation');
+    } else if ($check == 'labels') {
+      $this->rc->user->save_prefs(array('message_label_mode' => 'labels'));
+      $this->rc->output->command('display_message', $this->gettext('check_labels'), 'confirmation');
+    } else {
+      $this->rc->output->command('display_message', $this->gettext('check_error'), 'error');
+    }
+    $this->rc->output->send();
+  }
+
 }
 ?>

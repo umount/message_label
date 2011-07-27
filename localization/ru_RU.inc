@@ -17,4 +17,14 @@ $labels['headererror'] = 'Ошибка в правиле';
 $labels['inputempty'] = 'Одно или более совпадений пусты';
 $labels['invalidcolor'] = 'Неверный цвет';
 
+$labels['check_highlighting'] = 'Выбран режим подсветки';
+$labels['highlighting'] = 'Режим подсветки';
+
+$labels['check_labels'] = 'Выбран режим ярлыков';
+$labels['labels'] = 'Режим ярлыков';
+
+$labels['check_error'] = 'Ошибка выбора режима';
+
+$labels['label_mode'] = 'Выбор режима отображения';
+
 ?>

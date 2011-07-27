@@ -1,3 +1,10 @@
+/**
+ * @version 0.2
+ * @author Denis Sobolev <dns.sobol@gmail.com>
+ *
+ */
+
+
 section_select_init = function(id) {
   if (id) {
     var add_url = '', target = window;
@@ -41,6 +48,15 @@ function label_delete_row(id) {
   }
 }
 
+function check_mode(mode) {
+  if (mode == 'highlighting') {
+    rcmail.http_post('plugin.message_label.check_mode', '_check=highlighting');
+  } else {
+    rcmail.http_post('plugin.message_label.check_mode', '_check=labels');
+  }
+}
+
+
 if(window.rcmail) {
   rcmail.register_command('plugin.label_redirect', function(post) { rcmail.redirect_label_pref(post) }, true);
   rcmail.register_command('plugin.label_search', function(post) { rcmail.label_search(post) }, true);
@@ -49,11 +65,18 @@ if(window.rcmail) {
   rcmail.register_command('plugin.label_delete', function(post) { rcmail.label_delete(post) }, true);
   rcmail.register_command('plugin.label_delete_row', 'label_delete_row', true);
 
+  rcmail.register_command('plugin.message_label.check_mode', check_mode, true);
+  rcmail.enable_command('plugin.message_label.check_mode', true);
+
   rcmail.addEventListener('insertrow', function(evt) {
     var message = rcmail.env.messages[evt.row.uid];
     if(message.flags && message.flags.plugin_label) {
-      var label = '<span class="lbox"><span class="lmessage" style="background-color:'+message.flags.plugin_label.color+';">'+message.flags.plugin_label.text+'</span></span>';
-      $("#"+evt.row.obj.id+" .subject .status").after(label);
+      if (rcmail.env.message_label_mode == 'highlighting') {
+        evt.row.obj.style.backgroundColor = message.flags.plugin_label.color;
+      } else {
+        var label = '<span class="lbox"><span class="lmessage" style="background-color:'+message.flags.plugin_label.color+';">'+message.flags.plugin_label.text+'</span></span>';
+        $("#"+evt.row.obj.id+" .subject .status").after(label);
+      }
     }
   });
 
