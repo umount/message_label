@@ -73,6 +73,8 @@ if(window.rcmail) {
     if(message.flags && message.flags.plugin_label) {
       if (rcmail.env.message_label_mode == 'highlighting') {
         evt.row.obj.style.backgroundColor = message.flags.plugin_label.color;
+        $("#"+evt.row.obj.id+" td").css({'color' : '#ffffff'});
+        $("#"+evt.row.obj.id+" td a").css({'color' : '#ffffff'});
       } else {
         var label = '<span class="lbox"><span class="lmessage" style="background-color:'+message.flags.plugin_label.color+';">'+message.flags.plugin_label.text+'</span></span>';
         $("#"+evt.row.obj.id+" .subject .status").after(label);
