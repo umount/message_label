@@ -135,8 +135,10 @@ class message_label extends rcube_plugin
         }
       }
       if(!empty($color)) {
-        $message->list_flags['extra_flags']['plugin_label']['color'] = $color;
-        $message->list_flags['extra_flags']['plugin_label']['text'] = $text;
+        if (empty($message->list_flags['extra_flags'])) {
+            $message->list_flags['extra_flags']['plugin_label']['color'] = $color;
+            $message->list_flags['extra_flags']['plugin_label']['text'] = $text;
+        }
       }
     }
     return $p;
