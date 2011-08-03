@@ -185,21 +185,15 @@ if(window.rcmail) {
   rcmail.addEventListener('insertrow', function(evt) {
     var message = rcmail.env.messages[evt.row.uid];
     if(message.flags && message.flags.plugin_label) {
-      if (rcmail.env.message_label_mode == 'highlighting') {
-        evt.row.obj.style.backgroundColor = message.flags.plugin_label.color;
-        $("#"+evt.row.obj.id+" td").css({'color' : '#ffffff'});
-        $("#"+evt.row.obj.id+" td a").css({'color' : '#ffffff'});
-      } else {
-        for (var i=0; i<message.flags.plugin_label.length; i++) {
-          var label = '<span class="lbox">'
-                      +'<span class="lmessage '+message.flags.plugin_label[i].id+'" style="background-color:'
-                        +message.flags.plugin_label[i].color+';">'
-                        +'<a onclick=\"rcmail.unlabel_messages(\''+evt.row.obj.id+'\',\''
-                          +message.flags.plugin_label[i].id+'\''
-                          +',\''+message.flags.plugin_label[i].type+'\')">'
-                        +message.flags.plugin_label[i].text+'</a></span></span>';
-          $("#"+evt.row.obj.id+" .subject .status").after(label);
-        }
+      for (var i=0; i<message.flags.plugin_label.length; i++) {
+        var label = '<span class="lbox">'
+                    +'<span class="lmessage '+message.flags.plugin_label[i].id+'" style="background-color:'
+                      +message.flags.plugin_label[i].color+';">'
+                      +'<a onclick=\"rcmail.unlabel_messages(\''+evt.row.obj.id+'\',\''
+                        +message.flags.plugin_label[i].id+'\''
+                        +',\''+message.flags.plugin_label[i].type+'\')">'
+                      +message.flags.plugin_label[i].text+'</a></span></span>';
+        $("#"+evt.row.obj.id+" .subject .status").after(label);
       }
     }
   });

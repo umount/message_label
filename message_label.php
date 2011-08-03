@@ -40,8 +40,6 @@ class message_label extends rcube_plugin
     $this->register_action('plugin.not_label_folder_search', array($this, 'not_label_folder_search'));
     $this->register_action('plugin.message_label_setlabel', array($this, 'set_flags'));
 
-    $this->register_action('plugin.message_label.check_mode', array($this, 'action_check_mode'));
-
     $this->include_script('message_label.js');
     $this->include_script('colorpicker/mColorPicker.js');
 
@@ -703,10 +701,6 @@ class message_label extends rcube_plugin
     $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
     //write_log('debug', preg_replace('/\r\n$/', '', print_r($this->rc->imap->conn->flags,true)));
 
-    $mode = $this->rc->config->get('message_label_mode');
-    if (empty($mode)) $mode = 'labels';
-
-    $this->rc->output->set_env('message_label_mode', $mode);
     // add id to message label table if not specified
     $this->rc->output->add_gui_object('labellist', $attrib['id']);
 
@@ -733,20 +727,6 @@ class message_label extends rcube_plugin
 
       $this->rc = rcmail::get_instance();
       $this->rc->imap_connect();
-
-      $args['blocks']['select_mode'] = array('options' => array(), 'name' => Q($this->gettext('label_mode')));
-
-      $radio = new html_radiobutton(array('name' => 'select_mode'));
-
-      $mode = $this->rc->config->get('message_label_mode');
-      if (empty($mode)) $mode = 'labels';
-
-      $selector = $radio->show($mode, array('value' => 'labels', 'onclick' => 'return rcmail.command(\'plugin.message_label.check_mode\', \'labels\')')). Q($this->gettext('labels'));
-      $selector .= $radio->show($mode, array('value' => 'highlighting', 'onclick' => 'return rcmail.command(\'plugin.message_label.check_mode\', \'highlighting\')')). Q($this->gettext('highlighting'));
-
-      $args['blocks']['select_mode']['options'][0] = array('title' => '', 'content' => $selector);
-
-      $mode = $this->rc->config->get('message_label_mode');
 
       $args['blocks']['create_label'] =  array('options' => array(), 'name' => Q($this->gettext('label_create')));
       $args['blocks']['list_label'] =  array('options' => array(), 'name' => Q($this->gettext('label_title')));
