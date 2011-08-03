@@ -22,12 +22,18 @@ rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
     remove = 'tr#'+row+' span.'+label;
     a_uids[0] = row.replace(/^rcmrow/, '');
     if (type == 'filter') {
-      label = 'u'+label;
+      label_string = 'u'+label;
     } else {
-      label = 'un'+label;
+      label_string = 'un'+label;
     }
     $(remove).parent().remove();
-    rcmail.toggle_flagged_status(label, a_uids);
+
+    if (rcmail.env.search_labels == label) {
+      rcmail.message_list.remove_row(a_uids[0]);
+    }
+
+    rcmail.toggle_flagged_status(label_string, a_uids);
+
 }
 
 // label selected messages
@@ -61,7 +67,6 @@ rcube_webmail.prototype.label_messages = function(label) {
               roots.push(root);
             }
           }
-          //rcmail.message_list.remove_row(id, (this.env.display_next && n == selection.length-1));
         }
         // make sure there are no selected rows
         if (!rcmail.env.display_next)
