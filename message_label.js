@@ -4,7 +4,6 @@
  *
  */
 
-
 section_select_init = function(id) {
   if (id) {
     var add_url = '', target = window;
@@ -17,16 +16,83 @@ section_select_init = function(id) {
   return true;
 };
 
+
+rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
+    var a_uids = [], count = 0, msg;
+    remove = 'tr#'+row+' span.'+label;
+    a_uids[0] = row.replace(/^rcmrow/, '');
+    if (type == 'filter') {
+      label = 'u'+label;
+    } else {
+      label = 'un'+label;
+    }
+    $(remove).parent().remove();
+    rcmail.toggle_flagged_status(label, a_uids);
+}
+
+// label selected messages
+rcube_webmail.prototype.label_messages = function(label) {
+
+      label = label.id.replace(/^rcmrow/, '');
+
+      // exit if current or no mailbox specified or if selection is empty
+      if (!rcmail.env.uid && (!rcmail.message_list || !rcmail.message_list.get_selection().length))
+        return;
+
+      // Hide message command buttons until a message is selected
+      rcmail.enable_command(rcmail.env.message_commands, false);
+
+      var a_uids = [], count = 0, msg;
+
+      if (rcmail.env.uid)
+        a_uids[0] = rcmail.env.uid;
+      else {
+        var n, id, root, roots = [],
+          selection = rcmail.message_list.get_selection();
+
+        for (n=0, len=selection.length; n<len; n++) {
+          id = selection[n];
+          a_uids.push(id);
+
+          if (rcmail.env.threading) {
+            count += this.update_thread(id);
+            root = this.message_list.find_root(id);
+            if (root != id && $.inArray(root, roots) < 0) {
+              roots.push(root);
+            }
+          }
+          //rcmail.message_list.remove_row(id, (this.env.display_next && n == selection.length-1));
+        }
+        // make sure there are no selected rows
+        if (!rcmail.env.display_next)
+          rcmail.message_list.clear_selection();
+
+        /*
+        // update thread tree icons
+        for (n=0, len=roots.length; n<len; n++) {
+          rcmail.add_tree_icons(roots[n]);
+        }
+        */
+      }
+      rcmail.toggle_label_status(label, a_uids);
+}
+
+
+rcube_webmail.prototype.toggle_label_status = function(flag, a_uids) {
+
+  var i, len = a_uids.length,
+  url = '_uid='+rcmail.uids_to_list(a_uids)+'&_flag='+flag,
+  lock = rcmail.display_message(this.get_label('markingmessage'), 'loading');
+
+  rcmail.http_post('mark', url, lock);
+  rcmail.clear_message_list();
+  rcmail.command('list',rcmail.env.mailbox,this);
+}
+
 rcube_webmail.prototype.redirect_label_pref = function(post) {
   if (post != null) {
     rcmail.http_post('plugin.message_label_redirect', '');
   }
-}
-
-rcube_webmail.prototype.label_search = function(post) {
-  lock = rcmail.set_busy(true, 'loading');
-  rcmail.clear_message_list();
-  rcmail.http_post('plugin.message_label_search', post, lock);
 }
 
 rcube_webmail.prototype.label_mark = function(post) {
@@ -56,10 +122,19 @@ function check_mode(mode) {
   }
 }
 
+rcube_webmail.prototype.labels_select = function(list)
+{
+  var id = list.get_single_selection();
+  if (id != null) {
+    post = '_id='+list.rows[id].uid;
+    lock = rcmail.set_busy(true, 'loading');
+    rcmail.clear_message_list();
+    rcmail.http_post('plugin.message_label_search', post, lock);
+  }
+};
 
 if(window.rcmail) {
   rcmail.register_command('plugin.label_redirect', function(post) { rcmail.redirect_label_pref(post) }, true);
-  rcmail.register_command('plugin.label_search', function(post) { rcmail.label_search(post) }, true);
   rcmail.register_command('plugin.label_mark', function(post) { rcmail.label_mark(post) }, true);
   rcmail.register_command('plugin.label_move', function(post) { rcmail.label_move(post) }, true);
   rcmail.register_command('plugin.label_delete', function(post) { rcmail.label_delete(post) }, true);
@@ -67,6 +142,34 @@ if(window.rcmail) {
 
   rcmail.register_command('plugin.message_label.check_mode', check_mode, true);
   rcmail.enable_command('plugin.message_label.check_mode', true);
+
+  rcmail.addEventListener('init', function(evt) {
+    if (rcmail.gui_objects.labellist) {
+      var p = rcmail;
+      rcmail.label_list = new rcube_list_widget(rcmail.gui_objects.labellist,
+        {multiselect:false, draggable:false, keyboard:false});
+      rcmail.label_list.addEventListener('select', function(o){ p.labels_select(o); });
+      rcmail.label_list.row_init = function (row) {
+        row.obj.onmouseover = function() {
+          if (rcmail.drag_active && rcmail.env.mailbox) {
+            $('#'+row.id).addClass('droptarget');
+          }
+        };
+        row.obj.onmouseout = function() {
+          if (rcmail.drag_active && rcmail.env.mailbox) {
+            $('#'+row.id).removeClass('droptarget');
+          }
+        };
+        $('#'+row.id).mouseup(function(){
+          if (rcmail.drag_active && rcmail.env.mailbox) {
+            p.message_list.draglayer.hide();
+            p.label_messages(row);
+          }
+        });
+      };
+      rcmail.label_list.init();
+    }
+  })
 
   rcmail.addEventListener('insertrow', function(evt) {
     var message = rcmail.env.messages[evt.row.uid];
@@ -76,8 +179,16 @@ if(window.rcmail) {
         $("#"+evt.row.obj.id+" td").css({'color' : '#ffffff'});
         $("#"+evt.row.obj.id+" td a").css({'color' : '#ffffff'});
       } else {
-        var label = '<span class="lbox"><span class="lmessage" style="background-color:'+message.flags.plugin_label.color+';">'+message.flags.plugin_label.text+'</span></span>';
-        $("#"+evt.row.obj.id+" .subject .status").after(label);
+        for (var i=0; i<message.flags.plugin_label.length; i++) {
+          var label = '<span class="lbox">'
+                      +'<span class="lmessage '+message.flags.plugin_label[i].id+'" style="background-color:'
+                        +message.flags.plugin_label[i].color+';">'
+                        +'<a onclick=\"rcmail.unlabel_messages(\''+evt.row.obj.id+'\',\''
+                          +message.flags.plugin_label[i].id+'\''
+                          +',\''+message.flags.plugin_label[i].type+'\')">'
+                        +message.flags.plugin_label[i].text+'</a></span></span>';
+          $("#"+evt.row.obj.id+" .subject .status").after(label);
+        }
       }
     }
   });

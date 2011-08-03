@@ -20,6 +20,7 @@ class message_label extends rcube_plugin
     $this->add_hook('preferences_list', array($this, 'label_preferences'));
     $this->add_hook('preferences_save', array($this, 'label_save'));
     $this->add_hook('preferences_sections_list',array($this, 'preferences_section_list'));
+    $this->add_hook('imap_init', array($this, 'flag_message_load'));
 
     if ($rcmail->action == '' || $rcmail->action == 'show') {
         $labellink = $this->api->output->button(array('command' => 'plugin.label_redirect', 'type' => 'link', 'class' => 'active', 'content' => $this->gettext('label_pref')));
@@ -37,6 +38,7 @@ class message_label extends rcube_plugin
     $this->register_action('plugin.message_label_move', array($this, 'message_label_move'));
     $this->register_action('plugin.message_label_delete', array($this, 'message_label_delete'));
     $this->register_action('plugin.not_label_folder_search', array($this, 'not_label_folder_search'));
+    $this->register_action('plugin.message_label_setlabel', array($this, 'set_flags'));
 
     $this->register_action('plugin.message_label.check_mode', array($this, 'action_check_mode'));
 
@@ -45,6 +47,34 @@ class message_label extends rcube_plugin
 
     $this->include_stylesheet($this->local_skin_path().'/message_label.css');
   }
+
+  function toogle_flags() {
+    // Get what we need to do on what
+    $action = $_POST['_act'];
+    $ids = explode( ';', trim($_POST['_ids'], ';')); // convert the sequence of tags into one array (last char removed)
+    $tag = $_POST['_tag'];
+    $rcmail = rcmail::get_instance();
+    // Because the RCUBE set_flag method pick the flag in an attribute with pre-defined values,
+    // we first push the flag we are going to add into it, following its capitalization guideline
+    $rcmail->imap->conn->flags[strtoupper($tag)] = $tag;
+    if ($action == 'DEL')
+      $marked = $rcmail->imap->unset_flag($ids, $tag);
+    elseif ($action == 'DELALL') {
+      $tags = explode( ';', trim($tag, ';'));
+      foreach($tags as $label) {
+        $rcmail->imap->conn->flags[strtoupper($label)] = $label;
+        $marked = $rcmail->imap->unset_flag($ids, $label);
+      }
+    } else
+      $marked = $rcmail->imap->set_flag($ids, $tag);
+    if (!$marked) {
+      rcmail_display_server_error('errormarking');
+      $rcmail->output->send();
+    } else {
+      $rcmail->output->show_message('messagemarked', 'confirmation');
+    }
+  }
+
 
   /**
    * Called when the application is initialized
@@ -127,17 +157,48 @@ class message_label extends rcube_plugin
     if(!count($prefs) or !isset($p['messages']) or !is_array($p['messages'])) return $p;
 
     foreach($p['messages'] as $message) {
-      $color='';
-      foreach($prefs as $p) {
+      $type = 'filter';
+      $color=''; $ret_key=array();
+      foreach($prefs as $key=>$p) {
         if(stristr($message->$p['header'], $p['input'])) {
-          $color = $p['color'];
-          !empty($p['text']) ? $text= $p['text'] : $text='label';
+          array_push($ret_key,array('id'=>$key,'type'=>$type));
         }
       }
-      if(!empty($color)) {
-        if (empty($message->list_flags['extra_flags'])) {
-            $message->list_flags['extra_flags']['plugin_label']['color'] = $color;
-            $message->list_flags['extra_flags']['plugin_label']['text'] = $text;
+      foreach ($message->flags as $flag) {
+        if (strpos($flag, '$ulabels') === 0) {
+          $flag_id = str_replace('$ulabels_', '', $flag);
+          if (!empty($ret_key)) {
+            foreach($ret_key as $key_search => $value) {
+              $id = $value['id'];
+              if ($prefs[$id]['id'] == $flag_id && $value['type'] == 'filter') unset($ret_key[$key_search]);
+            }
+          }
+        }
+        $type = 'flag';
+        if (strpos($flag, '$labels') === 0) {
+          $flag_id = str_replace('$labels_', '', $flag);
+          foreach($prefs as $key=>$p) {
+            if ($p['id'] == $flag_id) array_push($ret_key,array('id'=>$key,'type'=>$type));
+          }
+        }
+      }
+
+      //write_log('debug', preg_replace('/\r\n$/', '', print_r($ret_key,true)));
+
+      if (!empty($ret_key)) {
+        sort($ret_key);
+        //write_log('debug', preg_replace('/\r\n$/', '', print_r($message->list_flags,true)));
+        $message->list_flags['extra_flags']['plugin_label'] = array();
+        $k = 0;
+        foreach($ret_key as $label_id) {
+          !empty($p['text']) ? $text= $p['text'] : $text='label';
+          $id = $label_id['id'];
+          $type = $label_id['type'];
+          $message->list_flags['extra_flags']['plugin_label'][$k]['color'] = $prefs[$id]['color'];
+          $message->list_flags['extra_flags']['plugin_label'][$k]['text'] = $prefs[$id]['text'];
+          $message->list_flags['extra_flags']['plugin_label'][$k]['id'] = $prefs[$id]['id'];
+          $message->list_flags['extra_flags']['plugin_label'][$k]['type'] = $type;
+          $k++;
         }
       }
     }
@@ -214,7 +275,7 @@ class message_label extends rcube_plugin
     if($use_saved_list && $_SESSION['all_folder_search']['uid_mboxes'])
         $result_h = $this->get_search_result();
     else
-        $result_h = $this->perform_search($search_str,$folders);
+        $result_h = $this->perform_search($search_str,$folders,$id);
 
     $this->rc->output->set_env('label_folder_search_active', 1);
     $this->rc->imap->page_size = $tmp_page_size;
@@ -258,10 +319,12 @@ class message_label extends rcube_plugin
    * @return  array    Indexed array with message header objects
    * @access  private
    */
-  private function perform_search($search_string,$folders) {
+  private function perform_search($search_string,$folders,$label_id) {
     $result_h = array();
     $uid_mboxes = array();
     $id = 1;
+
+    $search_string_label = 'KEYWORD "$labels_'.$label_id.'"';
 
     // Search all folders and build a final set
     if ($folders[0] == 'all' || empty($folders))
@@ -275,17 +338,34 @@ class message_label extends rcube_plugin
         continue;
 
       $this->rc->imap->set_mailbox($mbox);
+
       $this->rc->imap->search($mbox, $search_string, RCMAIL_CHARSET, $_SESSION['sort_col']);
       $result = $this->rc->imap->list_headers($mbox, 1, $_SESSION['sort_col'], $_SESSION['sort_order']);
+
+      $this->rc->imap->search($mbox, $search_string_label, RCMAIL_CHARSET, $_SESSION['sort_col']);
+      $result_label = $this->rc->imap->list_headers($mbox, 1, $_SESSION['sort_col'], $_SESSION['sort_order']);
+
+      if (!empty($result_label)) $result = array_merge($result,$result_label);
+      //write_log('debug', preg_replace('/\r\n$/', '', print_r($result_label,true)));
 
       foreach($result as $row) {
         $uid_mboxes[$id] = array('uid' => $row->uid, 'mbox' => $mbox);
         $row->uid = $id;
-
-        $result_h[] = $row;
-        $id++;
+        $add_res = 1;
+        foreach ($row->flags as $flag) {
+          if (strpos($flag, '$ulabels') === 0) {
+            $flag_id = str_replace('$ulabels_', '', $flag);
+            if ($flag_id == $label_id) $add_res = 0;
+          }
+        }
+        if ($add_res)  {
+          $result_h[] = $row;
+          $id++;
+        }
       }
     }
+
+    //write_log('debug', preg_replace('/\r\n$/', '', print_r($result_h,true)));
 
     $_SESSION['label_folder_search']['uid_mboxes'] = $uid_mboxes;
     $this->rc->output->set_env('label_folder_search_uid_mboxes', $uid_mboxes);
@@ -447,7 +527,6 @@ class message_label extends rcube_plugin
       $row->uid = $id;
       array_push($result_h, $row);
     }
-
     return $result_h;
   }
 
@@ -589,28 +668,56 @@ class message_label extends rcube_plugin
   }
 
   /**
-   * Label list to folder list menu
+   * Label list to folder list menu and set flags in imap conn
    *
    * @access  public
    */
   function folder_list_label($args) {
+
     $args['content'] .= html::div(array('id'=>'mailboxlist-title', 'class'=>'boxtitle label_header_menu'), $this->gettext('label_title'));
     $prefs = $this->rc->config->get('message_label', array());
-    if (count($prefs) > 0)
+
+    if (!strlen($attrib['id']))
+        $attrib['id'] = 'labellist';
+
+    if (count($prefs) > 0) {
+      $table = new html_table($attrib);
       foreach($prefs as $p) {
-        $args['content'] .= html::div('lmenu',
-            html::tag('span',array('class'=>'lmessage', 'style'=>'background-color:'.$p['color']),'').
-            html::a(array('href'=>'#', 'onclick'=>'return rcmail.command(\'plugin.label_search\',\'_id='.$p['id'].'\')'),$p['text'])
-          );
+            $table->add_row(array('id' => 'rcmrow' . html_identifier($p['id'])));
+            $table->add(array('class' => 'labels.label_color'), html::tag('span',array('class'=>'lmessage', 'style'=>'background-color:'.$p['color']),''));
+            $table->add(array('class' => 'labels.label_name'), $p['text']);
       }
-    else
+      $args['content'] .= html::div('lmenu',$table->show($attrib));
+    } else  {
       $args['content'] .= html::div('lmenu',html::a(array('href'=>'#','onclick'=>'return rcmail.command(\'plugin.label_redirect\',\'true\',true)'),$this->gettext('label_create')));
+    }
+
+    $flags = array();
+    foreach($prefs as $prefs_val) {
+       $flags +=  array(strtoupper($prefs_val['id']) => '$labels_'.$prefs_val['id']);
+    }
+
+    $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
+    //write_log('debug', preg_replace('/\r\n$/', '', print_r($this->rc->imap->conn->flags,true)));
 
     $mode = $this->rc->config->get('message_label_mode');
     if (empty($mode)) $mode = 'labels';
+
     $this->rc->output->set_env('message_label_mode', $mode);
+    // add id to message label table if not specified
+    $this->rc->output->add_gui_object('labellist', $attrib['id']);
 
     return $args;
+  }
+
+  function flag_message_load($p) {
+    $prefs = $this->rc->config->get('message_label', array());
+    $flags = array();
+    foreach($prefs as $prefs_val) {
+       $flags +=  array(strtoupper($prefs_val['id']) => '$labels_'.$prefs_val['id']);
+       $flags +=  array(strtoupper('u'.$prefs_val['id']) => '$ulabels_'.$prefs_val['id']);
+    }
+    $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
   }
 
   /**

@@ -3,7 +3,7 @@
 }
 
 .lbox {
-  padding: 0px 10px 2px 0px;
+  padding: 0px 5px 2px 0px;
 }
 
 .lhref, .lhref:active, .lhref:visited{
@@ -11,18 +11,29 @@
 }
 
 .lmessage {
-  padding: 2px 10px 2px 10px;
+  padding: 2px 8px 2px 8px;
   font-size: 10px;
   border-radius: 3px;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
-  color: #FFF;
+  color: #ffffff;
 }
+
+.lmessage a {
+  color: #ffffff !important;
+}
+
+
+.lmessage a:hover {
+  text-decoration: line-through !important;
+}
+
 
 .label_color_input {
   width: 20px;
   height: 20px;
   vertical-align: middle;
+  display: none;
 }
 
 .lmenu {
@@ -78,4 +89,9 @@
   height: 145px !important;
   padding: 2px !important;
   background-color: #ffffff !important;
+}
+
+#labellist tr.droptarget
+{
+  background-color: #FFFFA6;
 }
