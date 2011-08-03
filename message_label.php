@@ -164,30 +164,31 @@ class message_label extends rcube_plugin
           array_push($ret_key,array('id'=>$key,'type'=>$type));
         }
       }
-      foreach ($message->flags as $flag) {
-        if (strpos($flag, '$ulabels') === 0) {
-          $flag_id = str_replace('$ulabels_', '', $flag);
-          if (!empty($ret_key)) {
-            foreach($ret_key as $key_search => $value) {
-              $id = $value['id'];
-              if ($prefs[$id]['id'] == $flag_id && $value['type'] == 'filter') unset($ret_key[$key_search]);
+
+      if (!empty($message->flags))
+        foreach ($message->flags as $flag) {
+          if (strpos($flag, '$ulabels') === 0) {
+            $flag_id = str_replace('$ulabels_', '', $flag);
+            if (!empty($ret_key)) {
+              foreach($ret_key as $key_search => $value) {
+                $id = $value['id'];
+                if ($prefs[$id]['id'] == $flag_id && $value['type'] == 'filter') unset($ret_key[$key_search]);
+              }
+            }
+          }
+          $type = 'flag';
+          if (strpos($flag, '$labels') === 0) {
+            $flag_id = str_replace('$labels_', '', $flag);
+            foreach($prefs as $key=>$p) {
+              if ($p['id'] == $flag_id) array_push($ret_key,array('id'=>$key,'type'=>$type));
             }
           }
         }
-        $type = 'flag';
-        if (strpos($flag, '$labels') === 0) {
-          $flag_id = str_replace('$labels_', '', $flag);
-          foreach($prefs as $key=>$p) {
-            if ($p['id'] == $flag_id) array_push($ret_key,array('id'=>$key,'type'=>$type));
-          }
-        }
-      }
 
       //write_log('debug', preg_replace('/\r\n$/', '', print_r($ret_key,true)));
 
       if (!empty($ret_key)) {
         sort($ret_key);
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($message->list_flags,true)));
         $message->list_flags['extra_flags']['plugin_label'] = array();
         $k = 0;
         foreach($ret_key as $label_id) {
@@ -301,6 +302,7 @@ class message_label extends rcube_plugin
 
     // update message count display and reset threads
     $this->rc->output->set_env('search_request', "labelsearch");
+    $this->rc->output->set_env('search_labels', $id);
     $this->rc->output->set_env('messagecount', $count);
     $this->rc->output->set_env('pagecount', ceil($count/$this->rc->imap->page_size));
     $this->rc->output->set_env('threading', (bool)false);
@@ -352,12 +354,13 @@ class message_label extends rcube_plugin
         $uid_mboxes[$id] = array('uid' => $row->uid, 'mbox' => $mbox);
         $row->uid = $id;
         $add_res = 1;
-        foreach ($row->flags as $flag) {
-          if (strpos($flag, '$ulabels') === 0) {
-            $flag_id = str_replace('$ulabels_', '', $flag);
-            if ($flag_id == $label_id) $add_res = 0;
+        if (!empty($row->flags))
+          foreach ($row->flags as $flag) {
+            if (strpos($flag, '$ulabels') === 0) {
+              $flag_id = str_replace('$ulabels_', '', $flag);
+              if ($flag_id == $label_id) $add_res = 0;
+            }
           }
-        }
         if ($add_res)  {
           $result_h[] = $row;
           $id++;

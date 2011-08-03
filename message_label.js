@@ -82,6 +82,12 @@ rcube_webmail.prototype.label_messages = function(label) {
       rcmail.toggle_label_status(label, a_uids);
 }
 
+rcube_webmail.prototype.label_search = function(post) {
+  lock = rcmail.set_busy(true, 'loading');
+  rcmail.clear_message_list();
+  rcmail.http_post('plugin.message_label_search', post, lock);
+}
+
 
 rcube_webmail.prototype.toggle_label_status = function(flag, a_uids) {
 
