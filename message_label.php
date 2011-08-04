@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version 0.2
+ * @version 0.3
  * @author Denis Sobolev <dns.sobol@gmail.com>
  *
  */
@@ -684,7 +684,7 @@ class message_label extends rcube_plugin
     if (count($prefs) > 0) {
       $table = new html_table($attrib);
       foreach($prefs as $p) {
-            $table->add_row(array('id' => 'rcmrow' . html_identifier($p['id'])));
+            $table->add_row(array('id' => 'rcmrow' . $p['id']));
             $table->add(array('class' => 'labels_color'), html::tag('span',array('class'=>'lmessage', 'style'=>'background-color:'.$p['color']),''));
             $table->add(array('class' => 'labels_name'), $p['text']);
       }
