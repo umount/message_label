@@ -792,7 +792,7 @@ class message_label extends rcube_plugin
     // input field
     $input = new html_inputfield(array('name' => '_label_input[]', 'type' => 'text', 'autocomplete' => 'off', 'class' => 'watermark linput', 'value' => $input));
     $text = html::tag('input', array('name' => '_label_text[]' ,'type' => 'text' , 'title' => 'Найти информацию', 'class' => 'watermark linput', 'value' => $text));
-    $select_color = html::tag('input', array('id' => $id ,'name' => '_label_color[]' ,'type' => 'color' ,'text' => 'hidden', 'class' => 'label_color_input', 'value' => $color));
+    $select_color = html::tag('input', array('id' => $id ,'name' => '_label_color[]' ,'type' => 'hidden', 'text' => 'hidden', 'class' => 'label_color_input', 'value' => $color));
     $id_field =   html::tag('input', array('name' => '_label_id[]' ,'type' => 'hidden' ,'value' => $id));
 
     if (!$delete) {
@@ -843,6 +843,8 @@ class message_label extends rcube_plugin
     $input   = get_input_value('_label_input', RCUBE_INPUT_POST);
     $color   = get_input_value('_label_color', RCUBE_INPUT_POST);
     $text    = get_input_value('_label_text', RCUBE_INPUT_POST);
+
+    //write_log('debug', preg_replace('/\r\n$/', '', print_r($_POST,true)));
 
     for($i=0; $i < count($header); $i++) {
       if(!in_array($header[$i], array('subject', 'from', 'to', 'cc'))) {

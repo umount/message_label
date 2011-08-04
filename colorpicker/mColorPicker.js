@@ -302,7 +302,7 @@ mColorPicker = {
   
     jQuery('input').filter(function(index) {
   
-      return this.getAttribute("type") == 'color';
+      return this.getAttribute("class") == 'label_color_input';
     }).each(function (i) {
   
       if (jQuery("div#mColorPicker").length < 1) {
