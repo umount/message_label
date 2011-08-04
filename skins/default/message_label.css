@@ -6,6 +6,21 @@
   padding: 0px 5px 2px 0px;
 }
 
+#labellist {
+  width: 100%;
+}
+
+.labels_color {
+  width: 10px;
+}
+
+.labels_name {
+  padding: 2px;
+  color: #2C6EAA;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .lhref, .lhref:active, .lhref:visited{
   color: #2C6EAA;
 }
@@ -23,11 +38,9 @@
   color: #ffffff !important;
 }
 
-
 .lmessage a:hover {
   text-decoration: line-through !important;
 }
-
 
 .label_color_input {
   width: 20px;
