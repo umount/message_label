@@ -2,7 +2,15 @@ Message label plugin for roundcube
 
 Itroduction
 ----------------------------------------
-Tis is plugin for roundcube :)
+Tis is plugin for roundcube to add labels like Google labels.
+
+* manually and filter way add labels
+* manually remove filter find labels
+* multilabels support
+* drag and drop to add label support
+* remove label on one click on label in subject
+* search all labels in all folder on one click (manual select folder search on filter search label) 
+* display label list on left panel under folder list
 
 
 Contact
