@@ -1,5 +1,5 @@
 /**
- * @version 0.3
+ * @version 1.0
  * @author Denis Sobolev <dns.sobol@gmail.com>
  *
  */
@@ -16,13 +16,14 @@ section_select_init = function(id) {
   return true;
 };
 
-
 rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
     var a_uids = [], count = 0, msg;
     remove = 'tr#'+row+' span.'+label;
     a_uids[0] = row.replace(/^rcmrow/, '');
     if (type == 'filter') {
       label_string = 'u'+label;
+    } else if (type == 'flabel') {
+      label_string = label;
     } else {
       label_string = 'un'+label;
     }
@@ -32,7 +33,7 @@ rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
       rcmail.message_list.remove_row(a_uids[0]);
     }
 
-    rcmail.toggle_flagged_status(label_string, a_uids);
+    rcmail.toggle_label_status(label_string, a_uids, type, false);
 
 }
 
@@ -79,7 +80,7 @@ rcube_webmail.prototype.label_messages = function(label) {
         }
         */
       }
-      rcmail.toggle_label_status(label, a_uids);
+      rcmail.toggle_label_status(label, a_uids,'label',true);
 }
 
 rcube_webmail.prototype.label_search = function(post) {
@@ -88,15 +89,20 @@ rcube_webmail.prototype.label_search = function(post) {
   rcmail.http_post('plugin.message_label_search', post, lock);
 }
 
-rcube_webmail.prototype.toggle_label_status = function(flag, a_uids) {
+rcube_webmail.prototype.toggle_label_status = function(flag, a_uids, type, update) {
 
   var i, len = a_uids.length,
-  url = '_uid='+rcmail.uids_to_list(a_uids)+'&_flag='+flag,
-  lock = rcmail.display_message(rcmail.get_label('markingmessage'), 'loading');
+  url = '_uid='+rcmail.uids_to_list(a_uids)+'&_flag='+flag+'&_type='+type;
 
-  rcmail.http_post('mark', url, lock);
-  rcmail.clear_message_list();
-  rcmail.command('list',rcmail.env.mailbox,this);
+  if (update == true)
+    url += '&_update=1';
+
+  if (rcmail.env.label_folder_search_active)
+    url += '&_label_search=1';
+
+  lock = rcmail.display_message(rcmail.get_label('markingmessage'), 'loading');
+  rcmail.http_post('plugin.message_label_setlabel', url, lock);
+
 }
 
 rcube_webmail.prototype.redirect_label_pref = function(post) {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version 0.3
+ * @version 1.0
  * @author Denis Sobolev <dns.sobol@gmail.com>
  *
  */
@@ -38,7 +38,7 @@ class message_label extends rcube_plugin
     $this->register_action('plugin.message_label_move', array($this, 'message_label_move'));
     $this->register_action('plugin.message_label_delete', array($this, 'message_label_delete'));
     $this->register_action('plugin.not_label_folder_search', array($this, 'not_label_folder_search'));
-    $this->register_action('plugin.message_label_setlabel', array($this, 'set_flags'));
+    $this->register_action('plugin.message_label_setlabel', array($this, 'message_label_imap_set'));
 
     $this->include_script('message_label.js');
     $this->include_script('colorpicker/mColorPicker.js');
@@ -46,32 +46,6 @@ class message_label extends rcube_plugin
     $this->include_stylesheet($this->local_skin_path().'/message_label.css');
   }
 
-  function toogle_flags() {
-    // Get what we need to do on what
-    $action = $_POST['_act'];
-    $ids = explode( ';', trim($_POST['_ids'], ';')); // convert the sequence of tags into one array (last char removed)
-    $tag = $_POST['_tag'];
-    $rcmail = rcmail::get_instance();
-    // Because the RCUBE set_flag method pick the flag in an attribute with pre-defined values,
-    // we first push the flag we are going to add into it, following its capitalization guideline
-    $rcmail->imap->conn->flags[strtoupper($tag)] = $tag;
-    if ($action == 'DEL')
-      $marked = $rcmail->imap->unset_flag($ids, $tag);
-    elseif ($action == 'DELALL') {
-      $tags = explode( ';', trim($tag, ';'));
-      foreach($tags as $label) {
-        $rcmail->imap->conn->flags[strtoupper($label)] = $label;
-        $marked = $rcmail->imap->unset_flag($ids, $label);
-      }
-    } else
-      $marked = $rcmail->imap->set_flag($ids, $tag);
-    if (!$marked) {
-      rcmail_display_server_error('errormarking');
-      $rcmail->output->send();
-    } else {
-      $rcmail->output->show_message('messagemarked', 'confirmation');
-    }
-  }
 
 
   /**
@@ -174,11 +148,24 @@ class message_label extends rcube_plugin
               }
             }
           }
-          $type = 'flag';
+          $type = 'label';
           if (strpos($flag, '$labels') === 0) {
             $flag_id = str_replace('$labels_', '', $flag);
             foreach($prefs as $key=>$p) {
-              if ($p['id'] == $flag_id) array_push($ret_key,array('id'=>$key,'type'=>$type));
+              if ($p['id'] == $flag_id) {
+                if (!empty($ret_key)) {
+                  $flabel = false;
+                  foreach ($ret_key as $key_filter => $value_filter) {
+                    $searh_filter = array('id'=>$key,'type'=>'filter');
+                    if ($value_filter == $searh_filter) $flabel = $key_filter;
+                  }
+                }
+                if ($flabel !== false) {
+                   unset($ret_key[$flabel]);
+                   $type = 'flabel';
+                }
+                array_push($ret_key,array('id'=>$key,'type'=>$type));
+              }
             }
           }
         }
@@ -202,6 +189,64 @@ class message_label extends rcube_plugin
       }
     }
     return $p;
+  }
+
+  /**
+   * set flags when search labels by filter and label
+   *
+   */
+  function message_label_imap_set() {
+    if (($uids = get_input_value('_uid', RCUBE_INPUT_POST)) && ($flag = get_input_value('_flag', RCUBE_INPUT_POST))) {
+      $flag = $a_flags_map[$flag] ? $a_flags_map[$flag] : strtoupper($flag);
+      $type = get_input_value('_type', RCUBE_INPUT_POST);
+      $label_search = get_input_value('_label_search', RCUBE_INPUT_POST);
+
+      if ($label_search) {
+        $uids = explode(',', $uids);
+        // mark each uid individually because the mailboxes may differ
+        foreach($uids as $uid) {
+          $mbox = $_SESSION['label_folder_search']['uid_mboxes'][$uid]['mbox'];
+          $this->rc->imap->set_mailbox($mbox);
+          $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $flag);
+
+          if (!$marked) {
+            // send error message
+            $this->rc->output->show_message('errormarking', 'error');
+            $this->rc->output->send();
+            exit;
+          }
+          else if (empty($_POST['_quiet'])) {
+            $this->rc->output->show_message('messagemarked', 'confirmation');
+          }
+        }
+      } else {
+        if ($type == 'flabel') {
+          $unlabel = 'UN'.$flag; $marked = $this->rc->imap->set_flag($uids, $unlabel);
+          $unfiler = 'U'.$flag; $marked = $this->rc->imap->set_flag($uids, $unfiler);
+        }
+        else
+          $marked = $this->rc->imap->set_flag($uids, $flag);
+
+        if (!$marked) {
+          // send error message
+          if ($_POST['_from'] != 'show')
+            $this->rc->output->command('list_mailbox');
+            rcmail_display_server_error('errormarking');
+            $this->rc->output->send();
+            exit;
+        }
+        else if (empty($_POST['_quiet'])) {
+          $this->rc->output->show_message('messagemarked', 'confirmation');
+        }
+      }
+
+      if (!empty($_POST['_update'])) {
+        $this->rc->output->command('clear_message_list');
+        $this->rc->output->command('list_mailbox');
+      }
+
+    }
+    $this->rc->output->send();
   }
 
   /**
