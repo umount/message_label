@@ -92,7 +92,7 @@ rcube_webmail.prototype.toggle_label_status = function(flag, a_uids) {
 
   var i, len = a_uids.length,
   url = '_uid='+rcmail.uids_to_list(a_uids)+'&_flag='+flag,
-  lock = rcmail.display_message(this.get_label('markingmessage'), 'loading');
+  lock = rcmail.display_message(rcmail.get_label('markingmessage'), 'loading');
 
   rcmail.http_post('mark', url, lock);
   rcmail.clear_message_list();
@@ -212,6 +212,7 @@ if(window.rcmail) {
       rcmail.env.search_request = null;
       rcmail.env.all_folder_search_uid_mboxes = null;
       rcmail.http_post('plugin.not_label_folder_search', true);
+      rcmail.label_list.clear_selection();
     }
   });
 }
