@@ -367,7 +367,7 @@ class message_label extends rcube_plugin
   private function perform_search($search_string,$folders,$label_id) {
     $result_h = array();
     $uid_mboxes = array();
-    $id = 1;
+    $id = 1; $result = array(); $result_label = array();
 
     $search_string_label = 'KEYWORD "$labels_'.$label_id.'"';
 
@@ -390,23 +390,32 @@ class message_label extends rcube_plugin
       $this->rc->imap->search($mbox, $search_string_label, RCMAIL_CHARSET, $_SESSION['sort_col']);
       $result_label = $this->rc->imap->list_headers($mbox, 1, $_SESSION['sort_col'], $_SESSION['sort_order']);
 
-      if (!empty($result_label)) $result = array_merge($result,$result_label);
-      //write_log('debug', preg_replace('/\r\n$/', '', print_r($result_label,true)));
+      if (!empty($result_label))
+        foreach ($result_label as $header_obj) {
+          $add = true;
+          foreach ($result as $result_obj)
+            if ($result_obj->id == $header_obj->id) $add = false ;
+          if ($add) array_push($result,$header_obj);
+        }
 
       foreach($result as $row) {
         $uid_mboxes[$id] = array('uid' => $row->uid, 'mbox' => $mbox);
         $row->uid = $id;
-        $add_res = 1;
+        $add_res = 1; $add_labels = 0;
+
         if (!empty($row->flags))
-          foreach ($row->flags as $flag) {
-            if (strpos($flag, '$ulabels') === 0) {
-              $flag_id = str_replace('$ulabels_', '', $flag);
-              if ($flag_id == $label_id) $add_res = 0;
-            }
-          }
+          foreach ($row->flags as $flag)
+            if ($flag == '$ulabels_'.$label_id) $add_res = 0;
         if ($add_res)  {
           $result_h[] = $row;
           $id++;
+        } else {
+          foreach ($row->flags as $flag)
+            if ($flag == '$labels_'.$label_id) $add_labels = 1;
+          if ($add_labels) {
+            $result_h[] = $row;
+            $id++;
+          }
         }
       }
     }
