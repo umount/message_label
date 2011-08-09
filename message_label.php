@@ -394,7 +394,7 @@ class message_label extends rcube_plugin
         foreach ($result_label as $header_obj) {
           $add = true;
           foreach ($result as $result_obj)
-            if ($result_obj->id == $header_obj->id) $add = false ;
+            if ($result_obj->id == $header_obj->id) {$add = false; break;}
           if ($add) array_push($result,$header_obj);
         }
 
@@ -405,13 +405,13 @@ class message_label extends rcube_plugin
 
         if (!empty($row->flags))
           foreach ($row->flags as $flag)
-            if ($flag == '$ulabels_'.$label_id) $add_res = 0;
+            if ($flag == '$ulabels_'.$label_id) {$add_res = 0; break;}
         if ($add_res)  {
           $result_h[] = $row;
           $id++;
         } else {
           foreach ($row->flags as $flag)
-            if ($flag == '$labels_'.$label_id) $add_labels = 1;
+            if ($flag == '$labels_'.$label_id) {$add_labels = 1; break;}
           if ($add_labels) {
             $result_h[] = $row;
             $id++;
