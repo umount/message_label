@@ -30,7 +30,8 @@ rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
     $(remove).parent().remove();
 
     if (rcmail.env.search_labels == label) {
-      rcmail.message_list.remove_row(a_uids[0]);
+      if (rcmail.env.label_folder_search_active)
+        rcmail.message_list.remove_row(a_uids[0]);
     }
 
     rcmail.toggle_label_status(label_string, a_uids, type, false);
