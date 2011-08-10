@@ -27,8 +27,10 @@ class message_label extends rcube_plugin
         $this->api->add_content(html::tag('li', array('class' => 'separator_above'), $labellink), 'mailboxoptions');
     }
 
-    if ($rcmail->action == '')
+    if ($rcmail->action == '') {
       $this->add_hook('template_object_mailboxlist', array($this, 'folder_list_label'));
+      $this->add_hook('render_page', array($this, 'render_labels_menu'));
+    }
 
     $this->add_hook('startup', array($this, 'startup'));
 
@@ -720,6 +722,31 @@ class message_label extends rcube_plugin
    */
   function message_label_redirect(){
     $this->rc->output->redirect(array('_task'=>'settings','_action'=>'label_preferences'));
+  }
+
+  /**
+   * render labbel menu for markmessagemenu
+   */
+  function render_labels_menu($val) {
+    $prefs = $this->rc->config->get('message_label', array());
+    $input = new html_checkbox();
+    if (count($prefs) > 0) {
+      $attrib['class'] = 'labellistmenu';
+      $ul .= html::tag('li', array('class'=>'separator_below'), $this->gettext('label_set'));
+
+      foreach ($prefs as $p) {
+         $ul .= html::tag('li', null,
+           html::a(
+             array('class' => 'labellink active',
+                   'href'=>'#',
+                   'onclick'=>'rcmail.label_messages(\''.$p['id'].'\')'),
+             html::tag('span',array('class'=>'listmenu', 'style'=>'background-color:'.$p['color']),'').$p['text']));
+        }
+
+        $out = html::tag('ul', $attrib, $ul, html::$common_attrib);
+    }
+
+    $this->rc->output->add_footer($out);
   }
 
   /**

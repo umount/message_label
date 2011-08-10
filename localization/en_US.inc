@@ -1,6 +1,7 @@
 <?php
 $labels['label_title'] = 'Labels';
 $labels['label_create'] = 'Create label';
+$labels['label_set'] = 'Set label';
 $labels['label_matches'] = 'matches';
 $labels['label_color'] = 'color';
 $labels['label_delete'] = 'delete';

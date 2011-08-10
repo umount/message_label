@@ -41,8 +41,6 @@ rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
 // label selected messages
 rcube_webmail.prototype.label_messages = function(label) {
 
-      label = label.id.replace(/^rcmrow/, '');
-
       // exit if current or no mailbox specified or if selection is empty
       if (!rcmail.env.uid && (!rcmail.message_list || !rcmail.message_list.get_selection().length))
         return;
@@ -74,12 +72,6 @@ rcube_webmail.prototype.label_messages = function(label) {
         if (!rcmail.env.display_next)
           rcmail.message_list.clear_selection();
 
-        /*
-        // update thread tree icons
-        for (n=0, len=roots.length; n<len; n++) {
-          rcmail.add_tree_icons(roots[n]);
-        }
-        */
       }
       rcmail.toggle_label_status(label, a_uids,'label',true);
 }
@@ -183,7 +175,8 @@ if(window.rcmail) {
         $('#'+row.id).mouseup(function(){
           if (rcmail.drag_active && rcmail.env.mailbox) {
             p.message_list.draglayer.hide();
-            p.label_messages(row);
+            id = row.id.replace(/^rcmrow/, '');
+            p.label_messages(id);
           }
         });
       };
@@ -228,4 +221,5 @@ $(document).ready(function(){
   if (rcmail.gui_objects.sectionslist && (rcmail.env.action == 'label_preferences')) {
     section_select_init('label_preferences');
   }
+  $("#markmessagemenu").append($(".labellistmenu"));
 });

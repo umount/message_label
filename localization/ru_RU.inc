@@ -1,5 +1,6 @@
 <?php
 $labels['label_title'] = 'Ярлыки';
+$labels['label_set'] = 'Установить ярлык';
 $labels['label_create'] = 'Создать ярлык';
 $labels['label_matches'] = 'содержит';
 $labels['label_color'] = 'цвет';
