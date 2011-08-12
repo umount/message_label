@@ -27,7 +27,7 @@ class message_label extends rcube_plugin
         $this->api->add_content(html::tag('li', array('class' => 'separator_above'), $labellink), 'mailboxoptions');
     }
 
-    if ($rcmail->action == '') {
+    if ($rcmail->action == '' && $rcmail->task == 'mail') {
       $this->add_hook('template_object_mailboxlist', array($this, 'folder_list_label'));
       $this->add_hook('render_page', array($this, 'render_labels_menu'));
     }
