@@ -795,7 +795,10 @@ class message_label extends rcube_plugin
        $flags +=  array(strtoupper($prefs_val['id']) => '$labels_'.$prefs_val['id']);
        $flags +=  array(strtoupper('u'.$prefs_val['id']) => '$ulabels_'.$prefs_val['id']);
     }
-    $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
+    if (is_array($this->rc->imap->conn->flags))
+       $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
+    else
+       $this->rc->imap->conn->flags = $flags;
   }
 
   /**
