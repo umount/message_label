@@ -139,8 +139,8 @@ rcube_webmail.prototype.label_msglist_select = function(list)
   if(rcmail.env.label_folder_search_active) {
     if(list.selection.length == 1){
       var mbox = rcmail.env.label_folder_search_uid_mboxes[list.selection[0]].mbox;
-      rcmail.select_folder(mbox, rcmail.env.mailbox);
-      rcmail.env.mailbox = mbox;
+      rcmail.select_folder(mbox, '');
+      //rcmail.env.mailbox = mbox;
     }
       rcmail.message_list.draggable = false;
     }

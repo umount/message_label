@@ -140,23 +140,24 @@ class message_label extends rcube_plugin
       }
 
       if (!empty($message->flags))
-        foreach ($message->flags as $flag) {
-          if (strpos($flag, '$ulabels') === 0) {
-            $flag_id = str_replace('$ulabels_', '', $flag);
+        foreach ($message->flags as $flag => $set_val) {
+          if (stripos($flag, 'ulabels') === 0) {
+            $flag_id = str_ireplace('ulabels_', '', $flag);
             if (!empty($ret_key)) {
               foreach($ret_key as $key_search => $value) {
                 $id = $value['id'];
-                if ($prefs[$id]['id'] == $flag_id && $value['type'] == 'filter') unset($ret_key[$key_search]);
+                if ($prefs[$id]['id'] == strtolower($flag_id) && $value['type'] == 'filter') unset($ret_key[$key_search]);
               }
             }
           }
+
           $type = 'label';
-          if (strpos($flag, '$labels') === 0) {
-            $flag_id = str_replace('$labels_', '', $flag);
+          if (stripos($flag, 'labels') === 0) {
+            $flag_id = str_ireplace('labels_', '', $flag);
             foreach($prefs as $key=>$p) {
-              if ($p['id'] == $flag_id) {
+              if ($p['id'] == strtolower($flag_id)) {
+                $flabel = false;
                 if (!empty($ret_key)) {
-                  $flabel = false;
                   foreach ($ret_key as $key_filter => $value_filter) {
                     $searh_filter = array('id'=>$key,'type'=>'filter');
                     if ($value_filter == $searh_filter) $flabel = $key_filter;
@@ -209,7 +210,12 @@ class message_label extends rcube_plugin
         foreach($uids as $uid) {
           $mbox = $_SESSION['label_folder_search']['uid_mboxes'][$uid]['mbox'];
           $this->rc->imap->set_mailbox($mbox);
-          $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $flag);
+          if ($type == 'flabel') {
+            $unlabel = 'UN'.$flag; $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $unlabel);
+            $unfiler = 'U'.$flag; $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $unfiler);
+          }
+          else
+            $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $flag);
 
           if (!$marked) {
             // send error message
@@ -333,7 +339,7 @@ class message_label extends rcube_plugin
 
     // Make sure we got the headers
     if (!empty($result_h)) {
-      rcmail_js_message_list($result_h);
+      rcmail_js_message_list($result_h, false);
       if ($search_str)
         $this->rc->output->show_message('searchsuccessful', 'confirmation',  array('nr' => $count));
     }
@@ -405,21 +411,30 @@ class message_label extends rcube_plugin
         $row->uid = $id;
         $add_res = 1; $add_labels = 0;
 
+        //error_log(print_r($row->flags,true),'3','/var/log/nginx/test.log');
+
         if (!empty($row->flags))
-          foreach ($row->flags as $flag)
-            if ($flag == '$ulabels_'.$label_id) {$add_res = 0; break;}
+          foreach ($row->flags as $flag => $set_val) {
+            if ($flag == strtoupper('ulabels_'.$label_id)) {
+              $add_res = 0; break;
+            }
+          }
         if ($add_res)  {
           $result_h[] = $row;
           $id++;
         } else {
-          foreach ($row->flags as $flag)
-            if ($flag == '$labels_'.$label_id) {$add_labels = 1; break;}
+          foreach ($row->flags as $flag => $set_val)
+            if ($flag == strtoupper('labels_'.$label_id)) {$add_labels = 1; break;}
           if ($add_labels) {
             $result_h[] = $row;
             $id++;
           }
         }
       }
+    }
+
+    foreach($result_h as $set_flag) {
+        $set_flag->flags['skip_mbox_check'] = true;
     }
 
     //write_log('debug', preg_replace('/\r\n$/', '', print_r($result_h,true)));
@@ -795,10 +810,7 @@ class message_label extends rcube_plugin
        $flags +=  array(strtoupper($prefs_val['id']) => '$labels_'.$prefs_val['id']);
        $flags +=  array(strtoupper('u'.$prefs_val['id']) => '$ulabels_'.$prefs_val['id']);
     }
-    if (is_array($this->rc->imap->conn->flags))
-       $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
-    else
-       $this->rc->imap->conn->flags = $flags;
+    $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
   }
 
   /**
