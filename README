@@ -1,14 +1,13 @@
 Message label plugin for roundcube
 
-Attention! Latest version plugin use new roundcube class storage and don't work with version older 0.8.
-For version < 0.8 use older version plugin (1.0)
+Attention! Latest version plugin use new roundcube class storage and don't work with version < 0.8.
+For version < 0.8 use version plugin (1.0)
 
 Install
 -------------------------------------------
 1. git clone https://umount@github.com/umount/message_label.git message_label
 2. move folder message_label in roundcube plugin folder
-3. change roundcube config main.inc.php
-   $rcmail_config['plugins'] = array('message_label');
+3. add 'message_label' to $rcmail_config['plugins'] in your RoundCube config
 
 
 Itroduction
