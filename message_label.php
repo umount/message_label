@@ -14,39 +14,37 @@ class message_label extends rcube_plugin {
         $rcmail = rcmail::get_instance();
         $this->rc = $rcmail;
 
-        if (isset($_SESSION['user_id'])) {
-            $this->add_texts('localization', true);
-            $this->add_hook('messages_list', array($this, 'message_set_label'));
-            $this->add_hook('preferences_list', array($this, 'label_preferences'));
-            $this->add_hook('preferences_save', array($this, 'label_save'));
-            $this->add_hook('preferences_sections_list', array($this, 'preferences_section_list'));
-            $this->add_hook('storage_init', array($this, 'flag_message_load'));
+        $this->add_texts('localization', true);
+        $this->add_hook('messages_list', array($this, 'message_set_label'));
+        $this->add_hook('preferences_list', array($this, 'label_preferences'));
+        $this->add_hook('preferences_save', array($this, 'label_save'));
+        $this->add_hook('preferences_sections_list', array($this, 'preferences_section_list'));
+        $this->add_hook('storage_init', array($this, 'flag_message_load'));
 
-            if ($rcmail->action == '' || $rcmail->action == 'show') {
-                $labellink = $this->api->output->button(array('command' => 'plugin.label_redirect', 'type' => 'link', 'class' => 'active', 'content' => $this->gettext('label_pref')));
-                $this->api->add_content(html::tag('li', array('class' => 'separator_above'), $labellink), 'mailboxoptions');
-            }
-
-            if ($rcmail->action == '' && $rcmail->task == 'mail') {
-                $this->add_hook('template_object_mailboxlist', array($this, 'folder_list_label'));
-                $this->add_hook('render_page', array($this, 'render_labels_menu'));
-            }
-
-            $this->add_hook('startup', array($this, 'startup'));
-
-            $this->register_action('plugin.message_label_redirect', array($this, 'message_label_redirect'));
-            $this->register_action('plugin.message_label_search', array($this, 'message_label_search'));
-            $this->register_action('plugin.message_label_mark', array($this, 'message_label_mark'));
-            $this->register_action('plugin.message_label_move', array($this, 'message_label_move'));
-            $this->register_action('plugin.message_label_delete', array($this, 'message_label_delete'));
-            $this->register_action('plugin.not_label_folder_search', array($this, 'not_label_folder_search'));
-            $this->register_action('plugin.message_label_setlabel', array($this, 'message_label_imap_set'));
-
-            $this->include_script('message_label.js');
-            $this->include_script('colorpicker/mColorPicker.js');
-
-            $this->include_stylesheet($this->local_skin_path() . '/message_label.css');
+        if ($rcmail->action == '' || $rcmail->action == 'show') {
+            $labellink = $this->api->output->button(array('command' => 'plugin.label_redirect', 'type' => 'link', 'class' => 'active', 'content' => $this->gettext('label_pref')));
+            $this->api->add_content(html::tag('li', array('class' => 'separator_above'), $labellink), 'mailboxoptions');
         }
+
+        if ($rcmail->action == '' && $rcmail->task == 'mail') {
+            $this->add_hook('template_object_mailboxlist', array($this, 'folder_list_label'));
+            $this->add_hook('render_page', array($this, 'render_labels_menu'));
+        }
+
+        $this->add_hook('startup', array($this, 'startup'));
+
+        $this->register_action('plugin.message_label_redirect', array($this, 'message_label_redirect'));
+        $this->register_action('plugin.message_label_search', array($this, 'message_label_search'));
+        $this->register_action('plugin.message_label_mark', array($this, 'message_label_mark'));
+        $this->register_action('plugin.message_label_move', array($this, 'message_label_move'));
+        $this->register_action('plugin.message_label_delete', array($this, 'message_label_delete'));
+        $this->register_action('plugin.not_label_folder_search', array($this, 'not_label_folder_search'));
+        $this->register_action('plugin.message_label_setlabel', array($this, 'message_label_imap_set'));
+
+        $this->include_script('message_label.js');
+        $this->include_script('colorpicker/mColorPicker.js');
+
+        $this->include_stylesheet($this->local_skin_path() . '/message_label.css');
     }
 
     /**
@@ -553,7 +551,7 @@ class message_label extends rcube_plugin {
                 $mbox_names = $this->rc->storage->list_folders_subscribed();
 
                 foreach ($mbox_names as $mbox)
-		  $this->rc->output->command('set_unread_count', $mbox, $this->rc->storage->count($mbox, 'UNSEEN'), ($mbox == 'INBOX'));
+                    $this->rc->output->command('set_unread_count', $mbox, $this->rc->storage->count($mbox, 'UNSEEN'), ($mbox == 'INBOX'));
             } else if ($flag == 'DELETED' && $skip_deleted) {
                 if ($_POST['_from'] == 'show') {
                     if ($next = get_input_value('_next_uid', RCUBE_INPUT_GPC))
@@ -581,7 +579,7 @@ class message_label extends rcube_plugin {
                     $this->rc->output->set_env('pagecount', $pages);
                     // update mailboxlist
                     foreach ($this->rc->storage->list_folders_subscribed() as $mbox) {
-		      $unseen_count = $msg_count ? $this->rc->storage->count($mbox, 'UNSEEN') : 0;
+                        $unseen_count = $msg_count ? $this->rc->storage->count($mbox, 'UNSEEN') : 0;
                         $this->rc->output->command('set_unread_count', $mbox, $unseen_count, ($mbox == 'INBOX'));
                     }
                     $this->rc->output->command('set_rowcount', rcmail_get_messagecount_text($msg_count));
@@ -764,23 +762,25 @@ class message_label extends rcube_plugin {
      * render labbel menu for markmessagemenu
      */
     function render_labels_menu($val) {
-        $prefs = $this->rc->config->get('message_label', array());
-        $input = new html_checkbox();
-        if (count($prefs) > 0) {
-            $attrib['class'] = 'labellistmenu';
-            $ul .= html::tag('li', array('class' => 'separator_below'), $this->gettext('label_set'));
+        if (isset($_SESSION['user_id'])) {
+            $prefs = $this->rc->config->get('message_label', array());
+            $input = new html_checkbox();
+            if (count($prefs) > 0) {
+                $attrib['class'] = 'labellistmenu';
+                $ul .= html::tag('li', array('class' => 'separator_below'), $this->gettext('label_set'));
 
-            foreach ($prefs as $p) {
-                $ul .= html::tag('li', null, html::a(
-                                        array('class' => 'labellink active',
-                                    'href' => '#',
-                                    'onclick' => 'rcmail.label_messages(\'' . $p['id'] . '\')'), html::tag('span', array('class' => 'listmenu', 'style' => 'background-color:' . $p['color']), '') . $p['text']));
+                foreach ($prefs as $p) {
+                    $ul .= html::tag('li', null, html::a(
+                                            array('class' => 'labellink active',
+                                        'href' => '#',
+                                        'onclick' => 'rcmail.label_messages(\'' . $p['id'] . '\')'), html::tag('span', array('class' => 'listmenu', 'style' => 'background-color:' . $p['color']), '') . $p['text']));
+                }
+
+                $out = html::tag('ul', $attrib, $ul, html::$common_attrib);
             }
 
-            $out = html::tag('ul', $attrib, $ul, html::$common_attrib);
+            $this->rc->output->add_footer($out);
         }
-
-        $this->rc->output->add_footer($out);
     }
 
     /**
