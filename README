@@ -10,9 +10,9 @@ Install
 3. add 'message_label' to $rcmail_config['plugins'] in your RoundCube config
 
 
-Itroduction
+Introduction
 ----------------------------------------
-Tis is plugin for roundcube to add labels like Google labels.
+This is plugin for roundcube to add labels like Google labels.
 
 * manually and filter way add labels
 * manually remove filter find labels
