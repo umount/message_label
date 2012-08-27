@@ -1,0 +1,147 @@
+.label_header_menu {
+  padding: 12px 0px 3px 10px;
+  background-color: #D9ECF4 !important;
+}
+
+.lbox {
+  padding: 0px 5px 2px 1px;
+}
+
+
+#labellist {
+  width: 100%;
+}
+
+.labels_color {
+  width: 10px;
+}
+
+.labels_name {
+  padding: 5px 2px 4px 3px;
+  color: #2C6EAA;
+  cursor: pointer;
+  text-decoration: none;
+  color: #376572;
+}
+
+.lhref, .lhref:active, .lhref:visited{
+  color: #2C6EAA;
+}
+
+.lmessage {
+  padding: 1px 8px 4px 8px;
+  font-size: 10px;
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  color: #ffffff;
+}
+
+.lmessage a {
+  color: #ffffff !important;
+}
+
+.lmessage a:hover {
+  text-decoration: line-through !important;
+}
+
+.labellistmenu li.separator_below{
+  padding: 10px 1px 5px 15px !important;
+}
+
+ul.labellistmenu li
+{
+  font-size: 11px;
+  white-space: nowrap;
+  min-width: 120px;
+  margin: 1px 0px;
+  text-shadow: 0px 1px 1px #333;
+  color: #EEE;
+}
+
+.listmenu {
+  padding: 0px 6px 0px 7px;
+  margin: 0px 6px 0px 0px;
+  font-size: 10px;
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+}
+
+.label_color_input {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  display: none;
+}
+
+.lmenu {
+  padding: 4px;
+}
+
+.lmenu a {
+  padding-left: 5px;
+  color: #2C6EAA;
+  text-decoration: underline;
+}
+
+.watermark {
+  color: #777 !important;
+  font-style: italic;
+}
+
+.linput {
+  height: 20px !important;
+  padding: 0px 5px 0px 5px;
+  margin: 0px 5px 0px 5px;
+}
+
+.label_color_input {
+  background: url(select2.png) center !important;
+}
+
+table.propform td.title {
+  width: 1% !important;
+  padding: 0px;
+}
+
+table.propform input {
+  background-image: none;
+  padding: 0px;
+}
+
+
+/* remove some colorpicker elements */
+
+#mColorPickerTransparent, #mColorPickerImgGray {
+  display: none;
+}
+
+#mColorPickerSwatches {
+  height: 15px !important;
+}
+
+#mColorPickerSwatches div {
+  width: 18px !important;
+  height: 15px !important;
+}
+
+#mColorPickerFooter {
+  background-color: #ffffff !important;
+  height: 28px !important;
+}
+
+#mColorPickerImg {
+  height: 100px !important;
+}
+
+#mColorPicker {
+  height: 145px !important;
+  padding: 2px !important;
+  background-color: #ffffff !important;
+}
+
+#labellist tr.droptarget
+{
+  background-color: #FFFFA6;
+}
