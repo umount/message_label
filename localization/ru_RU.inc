@@ -27,5 +27,10 @@ $labels['labels'] = 'Режим ярлыков';
 $labels['check_error'] = 'Ошибка выбора режима';
 
 $labels['label_mode'] = 'Выбор режима отображения';
+$labels['search_info'] = 'Найти информацию';
+
+$labels['display_label_on'] = 'Отображение списка ярлыков включено';
+$labels['display_label_off'] = 'Отображение списка ярлыков отключено';
+
 
 ?>

@@ -27,6 +27,9 @@ $labels['labels'] = 'Labels mode';
 $labels['check_error'] = 'Error checking mode';
 
 $labels['label_mode'] = 'Mode display';
+$labels['search_info'] = 'Search information';
 
+$labels['display_label_on'] = 'Display labels list on';
+$labels['display_label_off'] = 'Display labels list off';
 
 ?>

@@ -41,6 +41,7 @@ class message_label extends rcube_plugin {
             $this->register_action('plugin.message_label_delete', array($this, 'message_label_delete'));
             $this->register_action('plugin.not_label_folder_search', array($this, 'not_label_folder_search'));
             $this->register_action('plugin.message_label_setlabel', array($this, 'message_label_imap_set'));
+            $this->register_action('plugin.message_label_display_list', array($this, 'display_list_preferences'));
 
             $this->include_script('message_label.js');
             $this->include_script('colorpicker/mColorPicker.js');
@@ -790,20 +791,24 @@ class message_label extends rcube_plugin {
      */
     function folder_list_label($args) {
 
-        $args['content'] .= html::div(array('id' => 'mailboxlist-title', 'class' => 'boxtitle label_header_menu'), $this->gettext('label_title'));
+        $args['content'] .= html::div(array('id' => 'labels-title', 'class' => 'boxtitle label_header_menu'), $this->gettext('label_title') . html::tag('span', array('class' => 'drop_arrow'), ''));
         $prefs = $this->rc->config->get('message_label', array());
 
         if (!strlen($attrib['id']))
             $attrib['id'] = 'labellist';
 
+        $display_label = $this->rc->config->get('message_label_display');
+        if ($display_label == 'false')
+            $style = 'display: none;';
+
         if (count($prefs) > 0) {
             $table = new html_table($attrib);
             foreach ($prefs as $p) {
-                $table->add_row(array('id' => 'rcmrow' . $p['id']));
+                $table->add_row(array('id' => 'rcmrow' . $p['id'], 'class' => 'labels_row'));
                 $table->add(array('class' => 'labels_color'), html::tag('span', array('class' => 'lmessage', 'style' => 'background-color:' . $p['color']), ''));
                 $table->add(array('class' => 'labels_name'), $p['text']);
             }
-            $args['content'] .= html::div('lmenu', $table->show($attrib));
+            $args['content'] .= html::div(array('class' => 'lmenu', 'id' => 'drop_labels', 'style' => $style), $table->show($attrib));
         } else {
             $args['content'] .= html::div('lmenu', html::a(array('href' => '#', 'onclick' => 'return rcmail.command(\'plugin.label_redirect\',\'true\',true)'), $this->gettext('label_create')));
         }
@@ -815,11 +820,28 @@ class message_label extends rcube_plugin {
 
         $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
         //write_log('debug', preg_replace('/\r\n$/', '', print_r($this->rc->imap->conn->flags,true)));
-
         // add id to message label table if not specified
         $this->rc->output->add_gui_object('labellist', $attrib['id']);
 
         return $args;
+    }
+
+    function display_list_preferences() {
+        $display_label = get_input_value('_display_label', RCUBE_INPUT_POST);
+        $display_folder = get_input_value('_display_folder', RCUBE_INPUT_POST);
+
+        if (!empty($display_label)) {
+            if ($display_label == 'true') {
+                $this->rc->user->save_prefs(array('message_label_display' => 'true'));
+                $this->rc->output->command('display_message', $this->gettext('display_label_on'), 'confirmation');
+            } else if ($display_label == 'false') {
+                $this->rc->user->save_prefs(array('message_label_display' => 'false'));
+                $this->rc->output->command('display_message', $this->gettext('display_label_off'), 'confirmation');
+            } else {
+                $this->rc->output->command('display_message', $this->gettext('display_error'), 'error');
+            }
+            $this->rc->output->send();
+        }
     }
 
     function flag_message_load($p) {
@@ -916,14 +938,14 @@ class message_label extends rcube_plugin {
             $button = html::a(array('href' => '#cc', 'class' => 'lhref', 'onclick' => 'return rcmail.command(\'plugin.label_delete_row\',\'' . $id . '\')'), $this->gettext('delete_row'));
         }
 
-        $content = $select_color."&nbsp;".
-                $text."&nbsp;".
-                $header_select->show($header)."&nbsp;".
-                $this->gettext('label_matches')."&nbsp;".
-                $input->show()."&nbsp;".
-                $id_field."&nbsp;".
-                $this->gettext('label_folder')."&nbsp;".
-                $folder_search->show($folder)."&nbsp;".
+        $content = $select_color . "&nbsp;" .
+                $text . "&nbsp;" .
+                $header_select->show($header) . "&nbsp;" .
+                $this->gettext('label_matches') . "&nbsp;" .
+                $input->show() . "&nbsp;" .
+                $id_field . "&nbsp;" .
+                $this->gettext('label_folder') . "&nbsp;" .
+                $folder_search->show($folder) . "&nbsp;" .
                 $button;
 
         return $content;

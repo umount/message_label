@@ -10,6 +10,8 @@
 
 #labellist {
   width: 100%;
+  border: 0px;
+  border-collapse: collapse;
 }
 
 .labels_color {
@@ -110,6 +112,27 @@ table.propform input {
   padding: 0px;
 }
 
+.drop_arrow {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    position: relative;
+    background: url(buttons.png) -28px -237px no-repeat;
+}
+
+.labels_row {
+  border-bottom: 1px solid #BBD3DA;
+  padding: 4px;
+}
+
+.labels_row td {
+  padding: 5px 4px 8px 4px;
+}
+
+#labellist tr.droptarget
+{
+  background-color: #FFFFA6;
+}
 
 /* remove some colorpicker elements */
 
