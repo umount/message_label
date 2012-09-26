@@ -66,9 +66,6 @@ class message_label extends rcube_plugin {
         $page = get_input_value('_page', RCUBE_INPUT_GET);
         $sort = get_input_value('_sort', RCUBE_INPUT_GET);
 
-        if ($args['action'] != 'check-recent')
-            error_log($args['action'] . ' - '.print_r($_REQUEST,true),3,'/var/log/nginx/test.log');
-
         if ($search == 'labelsearch') {
             if ($args['action'] == 'show' || $args['action'] == 'preview') {
                 $uid = $_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'];

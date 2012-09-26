@@ -16,13 +16,12 @@ section_select_init = function(id) {
     return true;
 };
 
-rcube_webmail.prototype.redirect_draft_messages = function(check) {
-    if (rcmail.env.label_folder_search_active || check) {
+rcube_webmail.prototype.redirect_draft_messages = function() {
+    if (rcmail.env.label_folder_search_active) {
         if (rcmail.task == 'mail') {
             uid = rcmail.get_single_uid();
-            if (uid && (!rcmail.env.uid || uid != rcmail.env.uid || check)) {
+            if (uid && (!rcmail.env.uid || uid != rcmail.env.uid)) {
                 if (rcmail.env.mailbox == rcmail.env.drafts_mailbox)  {
-                    if (check) rcmail.env.framed = true;
                     rcmail.goto_url('compose', { _draft_uid: uid, _mbox: rcmail.env.mailbox, _search: 'labelsearch' }, true);
                 }
             }
@@ -232,18 +231,6 @@ if(window.rcmail) {
             rcmail.message_list.addEventListener('select', function(o){
                 rcmail.label_msglist_select(o);
             });
-
-            if (rcmail.message_list) {
-                rcmail.addEventListener('actionbefore', function(command){
-                    switch (command.action) {
-                        case 'edit':
-                            rcmail.redirect_draft_messages(true);
-                        break;
-                        default:
-                        break;
-                    }
-                });
-            }
         }
     });
 
@@ -278,7 +265,7 @@ if(window.rcmail) {
     rcmail.addEventListener('actionbefore', function(command){
         switch (command.action) {
             case 'edit':
-                rcmail.redirect_draft_messages(true);
+                rcmail.env.framed = true;
             break;
             default:
                 break;
