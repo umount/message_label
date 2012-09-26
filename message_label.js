@@ -16,17 +16,21 @@ section_select_init = function(id) {
     return true;
 };
 
-rcube_webmail.prototype.redirect_draft_messages = function() {
+rcube_webmail.prototype.redirect_draft_messages = function(check) {
     if (rcmail.env.label_folder_search_active) {
         if (rcmail.task == 'mail') {
             uid = rcmail.get_single_uid();
-            if (uid && (!rcmail.env.uid || uid != rcmail.env.uid)) {
-                if (rcmail.env.mailbox == rcmail.env.drafts_mailbox)  {
-                    rcmail.goto_url('compose', { _draft_uid: uid, _mbox: rcmail.env.mailbox, _search: 'labelsearch' }, true);
+            if (uid && (!rcmail.env.uid || uid != rcmail.env.uid || check)) {
+                if ((rcmail.env.mailbox == rcmail.env.drafts_mailbox) || check)  {
+                    url = { _mbox: this.env.mailbox, _search: 'labelsearch' };
+                    url[this.env.mailbox == this.env.drafts_mailbox ? '_draft_uid' : '_uid'] = uid;
+                    this.goto_url('compose', url, true);
                 }
             }
         }
+        return true;
     }
+    return false;
 }
 
 rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
@@ -262,15 +266,11 @@ if(window.rcmail) {
         }
     });
 
-    rcmail.addEventListener('actionbefore', function(command){
-        switch (command.action) {
-            case 'edit':
-                rcmail.env.framed = true;
-            break;
-            default:
-                break;
-            }
-        });
+    rcmail.addEventListener('beforeedit', function(command){
+        rcmail.env.framed = true;
+        if (rcmail.redirect_draft_messages(true))
+            return false;
+    });
 
 }
 
