@@ -1,5 +1,5 @@
 /**
- * @version 1.1
+ * @version 1.2
  * @author Denis Sobolev <dns.sobol@gmail.com>
  *
  */
@@ -15,6 +15,20 @@ section_select_init = function(id) {
     }
     return true;
 };
+
+rcube_webmail.prototype.redirect_draft_messages = function(check) {
+    if (rcmail.env.label_folder_search_active || check) {
+        if (rcmail.task == 'mail') {
+            uid = rcmail.get_single_uid();
+            if (uid && (!rcmail.env.uid || uid != rcmail.env.uid || check)) {
+                if (rcmail.env.mailbox == rcmail.env.drafts_mailbox)  {
+                    if (check) rcmail.env.framed = true;
+                    rcmail.goto_url('compose', { _draft_uid: uid, _mbox: rcmail.env.mailbox, _search: 'labelsearch' }, true);
+                }
+            }
+        }
+    }
+}
 
 rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
     var a_uids = [], count = 0, msg;
@@ -78,6 +92,7 @@ rcube_webmail.prototype.label_messages = function(label) {
 
 rcube_webmail.prototype.label_search = function(post) {
     lock = rcmail.set_busy(true, 'loading');
+    rcmail.env.search_request = 'labelsearch';
     rcmail.clear_message_list();
     rcmail.http_post('plugin.message_label_search', post, lock);
 }
@@ -123,8 +138,7 @@ function label_delete_row(id) {
     }
 }
 
-rcube_webmail.prototype.labels_select = function(list)
-{
+rcube_webmail.prototype.labels_select = function(list) {
     var id = list.get_single_selection();
     if (id != null) {
         post = '_id='+list.rows[id].uid;
@@ -134,8 +148,7 @@ rcube_webmail.prototype.labels_select = function(list)
     }
 };
 
-rcube_webmail.prototype.label_msglist_select = function(list)
-{
+rcube_webmail.prototype.label_msglist_select = function(list) {
     if(rcmail.env.label_folder_search_active) {
         if(list.selection.length == 1){
             var mbox = rcmail.env.label_folder_search_uid_mboxes[list.selection[0]].mbox;
@@ -149,7 +162,7 @@ rcube_webmail.prototype.label_msglist_select = function(list)
                     if (div.hasClass('collapsed')) {
                         ex.push($(a).attr("rel"));
                     }
-                });
+                 });
                 for(var i = ex.length-1; i >= 0; i--) {
                     rcmail.command('collapse-folder', ex[i]);
                 }
@@ -212,12 +225,27 @@ if(window.rcmail) {
 
             rcmail.label_list.init();
 
+            rcmail.message_list.addEventListener('dblclick', function(o){
+                rcmail.redirect_draft_messages();
+            });
+
             rcmail.message_list.addEventListener('select', function(o){
                 rcmail.label_msglist_select(o);
             });
 
+            if (rcmail.message_list) {
+                rcmail.addEventListener('actionbefore', function(command){
+                    switch (command.action) {
+                        case 'edit':
+                            rcmail.redirect_draft_messages(true);
+                        break;
+                        default:
+                        break;
+                    }
+                });
+            }
         }
-    })
+    });
 
     rcmail.addEventListener('insertrow', function(evt) {
         var message = rcmail.env.messages[evt.row.uid];
@@ -246,6 +274,17 @@ if(window.rcmail) {
             rcmail.label_list.clear_selection();
         }
     });
+
+    rcmail.addEventListener('actionbefore', function(command){
+        switch (command.action) {
+            case 'edit':
+                rcmail.redirect_draft_messages(true);
+            break;
+            default:
+                break;
+            }
+        });
+
 }
 
 $(document).ready(function(){

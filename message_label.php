@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version 1.1
+ * @version 1.2
  * @author Denis Sobolev <dns.sobol@gmail.com>
  *
  */
@@ -66,10 +66,19 @@ class message_label extends rcube_plugin {
         $page = get_input_value('_page', RCUBE_INPUT_GET);
         $sort = get_input_value('_sort', RCUBE_INPUT_GET);
 
+        if ($args['action'] != 'check-recent')
+            error_log($args['action'] . ' - '.print_r($_REQUEST,true),3,'/var/log/nginx/test.log');
+
         if ($search == 'labelsearch') {
             if ($args['action'] == 'show' || $args['action'] == 'preview') {
                 $uid = $_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'];
                 $this->rc->output->redirect(array('_task' => 'mail', '_action' => $args['action'], '_mbox' => $mbox, '_uid' => $uid));
+            }
+            if ($args['action'] == 'compose') {
+                $draft_uid = get_input_value('_draft_uid', RCUBE_INPUT_GET);
+                $draft_uid = $_SESSION['label_folder_search']['uid_mboxes'][$draft_uid]['uid'];
+                $this->rc->output->redirect(array('_task' => 'mail', '_action' => $args['action'], '_mbox' => $mbox, '_draft_uid' => $draft_uid));
+                $this->rc->output->send();
             }
             if ($args['action'] == 'list') {
                 $this->rc->output->command('label_search', '_page=' . $page . '&_sort=' . $sort);
