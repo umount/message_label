@@ -9,10 +9,26 @@ class message_label extends rcube_plugin {
 
     public $task = 'mail|settings';
     public $rc;
+    private $cache;
+    private $cached;
+    private $size;
+    private $usecache;
 
     public function init() {
         $rcmail = rcmail::get_instance();
+        $this->load_config();
         $this->rc = $rcmail;
+        $this->usecache = $rcmail->config->get('message_label_cache');
+        if (isset($this->usecache) && false !== $this->usecache) {
+            $this->cache = $this->rc->get_cache('message_label', $this->usecache);
+            $this->usecache = true;
+        } else {
+            $this->usecache = false;
+        }
+
+        $this->size = $rcmail->config->get('message_label_size');
+        if (!isset($this->size))
+            $this->size = false;
 
         if (isset($_SESSION['user_id'])) {
             $this->add_texts('localization', true);
@@ -348,21 +364,70 @@ class message_label extends rcube_plugin {
         $search_str = trim($search_str);
         $count = 0;
         $result_h = Array();
-        $tmp_page_size = $this->rc->storage->get_pagesize();
         //$this->rc->imap->page_size = 500;
 
-        if ($use_saved_list && $_SESSION['all_folder_search']['uid_mboxes'])
-            $result_h = $this->get_search_result();
-        else
-            $result_h = $this->perform_search($search_str, $folders, $id);
+        // We can speed up the pagination using the cache
+        // There is a problem though, using this hack we never refresh the cache while we don't load another label...
+        // It's not a problem for my needs but might be one for others...
+        
+        if ($this->usecache && (($last = $this->cache->get('message_label_last_action')) && $last === $id.$folders.$search_str)) {
+            $r = $this->cache->get(md5($id.$folders.$search_str.'sorted'.$_SESSION['sort_col'].$_SESSION['sort_order'].$page));
+            if (!isset($r)) {
+                $rr = $this->cache->get(md5($id.$folders.$search_str.'sorted'.$_SESSION['sort_col'].$_SESSION['sort_order']));
+                $count = count($rr);
+                $result_h = $this->get_paged_result($rr, $page);
+                $this->cache->set(md5($id.$folders.$search_str.'sorted'.$_SESSION['sort_col'].$_SESSION['sort_order'].$page), $result_h);
+            } else {
+                $count = $this->cache->get('message_label_last_count');
+                $result_h = $r;
+            }
+        } else {
 
-        $this->rc->output->set_env('label_folder_search_active', 1);
-        //$this->rc->imap->page_size = $tmp_page_size;
-        $count = count($result_h);
+            if (false !== $this->size) {
+                $tmp_page_size = $this->rc->storage->get_pagesize();
+                $this->rc->storage->set_pagesize(50000);
+            }
 
-        $this->sort_search_result($result_h);
+            if ($use_saved_list && $_SESSION['all_folder_search']['uid_mboxes'])
+                $result_h = $this->get_search_result();
+            else
+                $result_h = $this->perform_search($search_str, $folders, $id);
 
-        $result_h = $this->get_paged_result($result_h, $page);
+            $this->rc->output->set_env('label_folder_search_active', 1);
+            if (false !== $this->size)
+                $this->rc->storage->set_pagesize($tmp_page_size);
+            //$this->rc->imap->page_size = $tmp_page_size;
+            $count = count($result_h);
+            if ($this->usecache)
+                $this->cache->set('message_label_last_count', $count);
+
+            $mcached = false;
+            if ($this->usecache && $this->cached[md5($id.$folders.$search_str.'cached'.$_SESSION['sort_col'].$_SESSION['sort_order'])]) {
+                $tmp = $this->cache->get(md5($id.$folders.$search_str.'sorted'.$_SESSION['sort_col'].$_SESSION['sort_order']));
+            }
+            if (!isset($tmp)) {
+                $this->sort_search_result2($result_h);
+                if ($this->usecache)
+                    $this->cache->set(md5($id.$folders.$search_str.'sorted'.$_SESSION['sort_col'].$_SESSION['sort_order']), $result_h);
+            } else {
+                $mcached = true;
+                $result_h = $tmp;
+            }
+
+            // We don't need to check if we must use a cache since $mcached will always be false in this case
+            if ($mcached) {
+                $tmp2 = $this->cache->get(md5($id.$folders.$search_str.'sorted'.$_SESSION['sort_col'].$_SESSION['sort_order'].$page));
+            }
+            if (!isset($tmp2)) {
+                $result_h = $this->get_paged_result($result_h, $page);
+                if ($this->usecache)
+                    $this->cache->set(md5($id.$folders.$search_str.'sorted'.$_SESSION['sort_col'].$_SESSION['sort_order'].$page), $result_h);
+            } else {
+                $result_h = $tmp2;
+            }
+        }
+        if ($this->usecache)
+            $this->cache->set('message_label_last_action', $id.$folders.$search_str);
 
         // Make sure we got the headers
         if (!empty($result_h)) {
@@ -413,9 +478,10 @@ class message_label extends rcube_plugin {
         else
             $folders_search = $folders;
 
+        $this->cached[md5($label_id.$folders.$search_string.'cached'.$_SESSION['sort_col'].$_SESSION['sort_order'])] = true;
         foreach ($folders_search as $mbox) {
 
-            if ($mbox == $this->rc->config->get('trash_mbox'))
+            if ($mbox == $this->rc->config->get('trash_mbox') || $mbox == $this->rc->config->get('junk_mbox'))
                 continue;
 
             $this->rc->storage->set_folder($mbox);
@@ -425,6 +491,21 @@ class message_label extends rcube_plugin {
 
             $this->rc->storage->search($mbox, $search_string_label, RCMAIL_CHARSET, $_SESSION['sort_col']);
             $result_label = $this->rc->storage->list_messages($mbox, 1, $_SESSION['sort_col'], $_SESSION['sort_order']);
+            if ($this->usecache) {
+                $old1 = $this->cache->get(md5($label_id.$mbox.$search_string.'msg1_count'));
+                $old2 = $this->cache->get(md5($label_id.$mbox.$search_string.'msg2_count'));
+                $count1 = count($result);
+                $count2 = count($result_label);
+                if (!isset($old1) || $count1 !== $old1)
+                    $this->cache->set(md5($label_id.$mbox.$search_string.'msg1_count'), $count1);
+                if (!isset($old2) || $count2 !== $old2)
+                    $this->cache->set(md5($label_id.$mbox.$search_string.'msg2_count'), $count2);
+                if ($count1 === $old1 && $count2 === $old2) {
+                    $result_h = array_merge($result_h, $this->cache->get(md5($label_id.$mbox.$search_string.'result_h')));
+                    continue;
+                }
+                $this->cached[md5($label_id.$folders.$search_string.'cached'.$_SESSION['sort_col'].$_SESSION['sort_order'])] = false;
+            }
 
             if (!empty($result_label))
                 foreach ($result_label as $header_obj) {
@@ -437,7 +518,9 @@ class message_label extends rcube_plugin {
                     if ($add)
                         array_push($result, $header_obj);
                 }
+        //write_log('debug', preg_replace('/\r\n$/', '', print_r($result,true)));
 
+            $tmp = array();
             foreach ($result as $row) {
                 $uid_mboxes[$id] = array('uid' => $row->uid, 'mbox' => $mbox);
                 $row->uid = $id;
@@ -452,7 +535,7 @@ class message_label extends rcube_plugin {
                         }
                     }
                 if ($add_res) {
-                    $result_h[] = $row;
+                    $tmp[] = $row;
                     $id++;
                 } else {
                     foreach ($row->flags as $flag => $set_val)
@@ -461,11 +544,14 @@ class message_label extends rcube_plugin {
                             break;
                         }
                     if ($add_labels) {
-                        $result_h[] = $row;
+                        $tmp[] = $row;
                         $id++;
                     }
                 }
             }
+            if ($this->usecache)
+                $this->cache->set(md5($label_id.$mbox.$search_string.'result_h'), $tmp);
+            $result_h = array_merge($result_h, $tmp);
         }
 
         foreach ($result_h as $set_flag) {
@@ -473,6 +559,7 @@ class message_label extends rcube_plugin {
         }
 
         //write_log('debug', preg_replace('/\r\n$/', '', print_r($result_h,true)));
+        //write_log('debug', "count: ".count($result_h));
 
         $_SESSION['label_folder_search']['uid_mboxes'] = $uid_mboxes;
         $this->rc->output->set_env('label_folder_search_uid_mboxes', $uid_mboxes);
@@ -605,7 +692,7 @@ class message_label extends rcube_plugin {
                         $sort_order = isset($_SESSION['sort_order']) ? $_SESSION['sort_order'] : $this->rc->config->get('message_sort_order');
 
                         $a_headers = $this->get_search_result();
-                        $this->sort_search_result($a_headers);
+                        $this->sort_search_result2($a_headers);
                         $a_headers = array_slice($a_headers, $sort_order == 'DESC' ? 0 : -$count, $count);
                         rcmail_js_message_list($a_headers, false, false);
                     }
@@ -764,6 +851,47 @@ class message_label extends rcube_plugin {
             $result_h = array_reverse($result_h);
     }
 
+    static function cmp ($a, $b) {
+        $desc = $_SESSION['sort_order'] == 'DESC';
+        switch ($_SESSION['sort_col']) {
+        case 'date':
+            if ($a->timestamp === $b->timestamp)
+               return 0; 
+            if ($desc)
+                $comp = $a->timestamp > $b->timestamp;
+            else
+                $comp = $a->timestamp < $b->timestamp;
+            return $comp ? -1 : 1;
+        case 'size':
+            if ($a->size === $b->size)
+               return 0; 
+            if ($desc)
+                $comp = $a->size > $b->size;
+            else
+                $comp = $a->size < $b->size;
+            return $comp ? -1 : 1;
+        case 'subject':
+            if ($a->subject === $b->subject)
+               return 0; 
+            if ($desc)
+                $comp = $a->subject > $b->subject;
+            else
+                $comp = $a->subject < $b->subject;
+            return $comp ? -1 : 1;
+        case 'from':
+            if ($a->from === $b->from)
+               return 0; 
+            if ($desc)
+                $comp = $a->from > $b->from;
+            else
+                $comp = $a->from < $b->from;
+            return $comp ? -1 : 1;
+        }
+    }
+
+    private function sort_search_result2(&$result_h) {
+        usort($result_h, array('message_label', 'cmp'));
+    }
     /**
      * Redirect function on arrival label to folder list
      *
