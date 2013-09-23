@@ -1,6 +1,6 @@
 Message label plugin for roundcube
 
-Attention! Latest version plugin use new roundcube class storage and don't work with version < 0.8.
+Attention! Latest version plugin use new roundcube class storage and don't work with version < 0.9.4
 For version < 0.8 use version plugin (1.0)
 
 Install

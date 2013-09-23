@@ -39,11 +39,11 @@
   color: #ffffff;
 }
 
-.lmessage a {
+.lmessage span.ml_label {
   color: #ffffff !important;
 }
 
-.lmessage a:hover {
+.lmessage span.ml_label:hover {
   text-decoration: line-through !important;
 }
 
@@ -167,4 +167,56 @@ table.propform input {
 #labellist tr.droptarget
 {
   background-color: #FFFFA6;
+}
+
+#sections-table #rcmrowlabel_preferences td.section {
+  background-position: 6px -862px;    
+}
+
+.lmessage.dark span.ml_label {
+    color: #000000 !important;     
+}
+
+.lmessage.light span.ml_label {
+    color: #ffffff !important;     
+}
+
+.mlabel_found {
+    top: 3px;
+    right: 6px;
+    min-width: 1.8em;
+    padding: 2px 4px;
+    background: #82acb5;
+    background: -moz-linear-gradient(top, #82acb5 0%, #6a939f 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#82acb5), color-stop(100%,#6a939f));
+    background: -o-linear-gradient(top, #82acb5 0%, #6a939f 100%);
+    background: -ms-linear-gradient(top, #82acb5 0%, #6a939f 100%);
+    background: linear-gradient(top, #82acb5 0%, #6a939f 100%);
+    box-shadow: inset 0 1px 1px 0 #536d72;
+    -o-box-shadow: inset 0 1px 1px 0 #536d72;
+    -webkit-box-shadow: inset 0 1px 1px 0 #536d72;
+    -moz-box-shadow: inset 0 1px 1px 0 #536d72;
+    border-radius: 9px;
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+    text-shadow: none;
+    display: block;
+}
+
+.records-table tbody .mlabel_mbox td {
+    border-top: 1px solid #fff;
+    border-bottom: 1px solid #bbd3da;
+    cursor: default;
+    font-weight: normal;
+    background-color: #d9ecf4;
+    color: #376572;
+    text-shadow: 0px 1px 1px #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+#markmessagemenu .labellistmenu li.separator_below.inactive {
+    color: #666;
 }
