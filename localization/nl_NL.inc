@@ -2,7 +2,7 @@
 $labels['label_title'] = 'Labels';
 $labels['label_create'] = 'Maak label';
 $labels['label_set'] = 'Plaats label';
-$labels['label_matches'] = 'overeenkomsten';
+$labels['label_matches'] = 'bevat';
 $labels['label_color'] = 'kleur';
 $labels['label_delete'] = 'verwijder';
 $labels['label_name'] = 'naam';
@@ -29,7 +29,7 @@ $labels['check_error'] = 'Controleren op fouten modus';
 $labels['label_mode'] = 'Toon modus';
 $labels['search_info'] = 'Zoek informatie';
 
-$labels['display_label_on'] = 'Labels tonen in lijst';
-$labels['display_label_off'] = 'Labels verbergen in lijst';
+$labels['display_label_on'] = 'Lijst met labels is zichtbaar';
+$labels['display_label_off'] = 'Lijst met labels is verborgen';
 
 ?>
