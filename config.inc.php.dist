@@ -1,0 +1,11 @@
+<?php
+
+// Number of messages to retrieve per folder
+// default: number of messages to display
+$rcmail_config['message_label_size'] = 5000;
+
+// use a cache
+// caches available: 'apc', 'db' or 'memcache' depending your roundcube configuration
+$rcmail_config['message_label_cache'] = 'memcache';
+
+?>
