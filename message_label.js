@@ -36,7 +36,7 @@ rcube_webmail.prototype.redirect_draft_messages = function(check) {
 rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
     var a_uids = [], count = 0, msg;
     remove = 'tr#'+row+' span.'+label;
-    a_uids[0] = row.replace(/^rcmrow/, '');
+    /**a_uids[0] = row.replace(/^rcmrow/, '');**/
     if (type == 'filter') {
         label_string = 'u'+label;
     } else if (type == 'flabel') {
@@ -46,6 +46,31 @@ rcube_webmail.prototype.unlabel_messages = function(row, label, type) {
     }
     $(remove).parent().remove();
 
+    a_uids = [];
+    if (rcmail.env.uid)
+        a_uids[0] = rcmail.env.uid;
+    else {
+        var n, id, root, roots = [],
+        selection = rcmail.message_list.get_selection();
+
+        for (n=0, len=selection.length; n<len; n++) {
+            id = selection[n];
+            a_uids.push(id);
+
+            if (rcmail.env.threading) {
+                count += this.update_thread(id);
+                root = this.message_list.find_root(id);
+                if (root != id && $.inArray(root, roots) < 0) {
+                    roots.push(root);
+                }
+            }
+        }
+        // make sure there are no selected rows
+        if (!rcmail.env.display_next)
+            rcmail.message_list.clear_selection();
+
+    }
+    
     if (rcmail.env.search_labels == label) {
         if (rcmail.env.label_folder_search_active)
             rcmail.message_list.remove_row(a_uids[0]);
