@@ -171,7 +171,7 @@ class message_label extends rcube_plugin
     public function message_set_label($p)
     {
         $prefs = $this->rc->config->get('message_label', array());
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($prefs, true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($prefs, true)));
 
         if (!count($prefs) or !isset($p['messages']) or !is_array($p['messages'])) {
             return $p;
@@ -231,7 +231,7 @@ class message_label extends rcube_plugin
                 }
             }
 
-            //write_log('debug', preg_replace('/\r\n$/', '', print_r($ret_key,true)));
+            //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($ret_key,true)));
 
             if (!empty($ret_key)) {
                 sort($ret_key);
@@ -513,7 +513,7 @@ class message_label extends rcube_plugin
             $set_flag->flags['skip_mbox_check'] = true;
         }
 
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($result_h,true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($result_h,true)));
 
         $_SESSION['label_folder_search']['uid_mboxes'] = $uid_mboxes;
         $this->rc->output->set_env('label_folder_search_uid_mboxes', $uid_mboxes);
@@ -896,7 +896,7 @@ class message_label extends rcube_plugin
         }
 
         $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($this->rc->imap->conn->flags,true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($this->rc->imap->conn->flags,true)));
 
         // add id to message label table if not specified
         $this->rc->output->add_gui_object('labellist', $attrib['id']);
@@ -1092,7 +1092,7 @@ class message_label extends rcube_plugin
         $color = rcube_utils::get_input_value('_label_color', rcube_utils::INPUT_POST);
         $text = rcube_utils::get_input_value('_label_text', rcube_utils::INPUT_POST);
 
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($_POST,true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($_POST,true)));
 
         for ($i = 0; $i < count($header); $i++) {
             if (!in_array($header[$i], array('subject', 'from', 'to', 'cc'))) {
