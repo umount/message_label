@@ -53,7 +53,7 @@ class message_label extends rcube_plugin
             $this->include_script('message_label.js');
             $this->include_script('colorpicker/mColorPicker.js');
 
-            $this->include_stylesheet($this->local_skin_path() . '/message_label.css');
+            $this->include_stylesheet('skins/default/message_label.css');
         }
     }
 
