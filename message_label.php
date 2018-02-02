@@ -1016,7 +1016,8 @@ class message_label extends rcube_plugin
             'type' => 'text',
             'autocomplete' => 'off',
             'class' => 'watermark linput',
-            'value' => $input
+            'value' => $input,
+            'placeholder' => $this->gettext('label_matches')
         ));
         $text = html::tag('input', array(
             'name' => '_label_text[]',
@@ -1048,7 +1049,6 @@ class message_label extends rcube_plugin
         $content = $select_color . "&nbsp;" .
             $text . "&nbsp;" .
             $header_select->show($header) . "&nbsp;" .
-            $this->gettext('label_matches') . "&nbsp;" .
             $input->show() . "&nbsp;" .
             $id_field . "&nbsp;" .
             $this->gettext('label_folder') . "&nbsp;" .
