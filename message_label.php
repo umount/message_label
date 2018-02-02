@@ -181,13 +181,10 @@ class message_label extends rcube_plugin
             $type = 'filter';
             $color = '';
             $ret_key = array();
-            foreach ($prefs as $key => $p) {
-                if ($p['header'] == 'subject') {
-                    $cont = trim(rcube_mime::decode_header($message->$p['header'], $message->charset));
-                } else {
-                    $cont = $message->$p['header'];
-                }
-                if (stristr($cont, $p['input'])) {
+            foreach ($prefs as $key => $pref) {
+                $cont = trim($message->get($pref['header'], true));
+
+                if (stristr($cont, $pref['input'])) {
                     array_push($ret_key, array('id' => $key, 'type' => $type));
                 }
             }
