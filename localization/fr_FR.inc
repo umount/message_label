@@ -2,7 +2,7 @@
 $labels['label_title'] = 'Étiquettes';
 $labels['label_create'] = 'Créer une étiquette';
 $labels['label_set'] = 'Définir';
-$labels['label_matches'] = 'correspondant à';
+$labels['label_matches'] = 'contient';
 $labels['label_color'] = 'couleur';
 $labels['label_delete'] = 'supprimer';
 $labels['label_name'] = 'nom de l\'étiquette';
