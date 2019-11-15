@@ -5,12 +5,14 @@
  * @author Denis Sobolev <dns.sobol@gmail.com>
  *
  */
-class message_label extends rcube_plugin {
+class message_label extends rcube_plugin
+{
 
     public $task = 'mail|settings';
     public $rc;
 
-    public function init() {
+    public function init()
+    {
         $rcmail = rcmail::get_instance();
         $this->rc = $rcmail;
 
@@ -23,7 +25,12 @@ class message_label extends rcube_plugin {
             $this->add_hook('storage_init', array($this, 'flag_message_load'));
 
             if ($rcmail->action == '' || $rcmail->action == 'show') {
-                $labellink = $this->api->output->button(array('command' => 'plugin.label_redirect', 'type' => 'link', 'class' => 'active', 'content' => $this->gettext('label_pref')));
+                $labellink = $this->api->output->button(array(
+                    'command' => 'plugin.label_redirect',
+                    'type' => 'link',
+                    'class' => 'active',
+                    'content' => $this->gettext('label_pref')
+                ));
                 $this->api->add_content(html::tag('li', array('class' => 'separator_above'), $labellink), 'mailboxoptions');
             }
 
@@ -46,7 +53,7 @@ class message_label extends rcube_plugin {
             $this->include_script('message_label.js');
             $this->include_script('colorpicker/mColorPicker.js');
 
-            $this->include_stylesheet($this->local_skin_path() . '/message_label.css');
+            $this->include_stylesheet('skins/default/message_label.css');
         }
     }
 
@@ -56,30 +63,47 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function startup($args) {
-        $search = get_input_value('_search', RCUBE_INPUT_GET);
-        if (!isset($search))
-            $search = get_input_value('_search', RCUBE_INPUT_POST);
+    public function startup($args)
+    {
+        $search = rcube_utils::get_input_value('_search', rcube_utils::INPUT_GET);
+        if (!isset($search)) {
+            $search = rcube_utils::get_input_value('_search', rcube_utils::INPUT_POST);
+        }
 
-        $uid = get_input_value('_uid', RCUBE_INPUT_GET);
-        $mbox = get_input_value('_mbox', RCUBE_INPUT_GET);
-        $page = get_input_value('_page', RCUBE_INPUT_GET);
-        $sort = get_input_value('_sort', RCUBE_INPUT_GET);
+        $uid = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_GET);
+        $mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_GET);
+        $page = rcube_utils::get_input_value('_page', rcube_utils::INPUT_GET);
+        $sort = rcube_utils::get_input_value('_sort', rcube_utils::INPUT_GET);
 
         if ($search == 'labelsearch') {
             if (($args['action'] == 'show' || $args['action'] == 'preview') && !empty($uid)) {
                 $uid = $_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'];
-                $this->rc->output->redirect(array('_task' => 'mail', '_action' => $args['action'], '_mbox' => $mbox, '_uid' => $uid));
+                $this->rc->output->redirect(array(
+                    '_task' => 'mail',
+                    '_action' => $args['action'],
+                    '_mbox' => $mbox,
+                    '_uid' => $uid
+                ));
             }
             if ($args['action'] == 'compose') {
-                $draft_uid = get_input_value('_draft_uid', RCUBE_INPUT_GET);
+                $draft_uid = rcube_utils::get_input_value('_draft_uid', rcube_utils::INPUT_GET);
                 if (!empty($draft_uid)) {
                     $draft_uid = $_SESSION['label_folder_search']['uid_mboxes'][$draft_uid]['uid'];
-                    $this->rc->output->redirect(array('_task' => 'mail', '_action' => $args['action'], '_mbox' => $mbox, '_draft_uid' => $draft_uid));
+                    $this->rc->output->redirect(array(
+                        '_task' => 'mail',
+                        '_action' => $args['action'],
+                        '_mbox' => $mbox,
+                        '_draft_uid' => $draft_uid
+                    ));
                     $this->rc->output->send();
                 } elseif (!empty($uid)) {
                     $uid = $_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'];
-                    $this->rc->output->redirect(array('_task' => 'mail', '_action' => $args['action'], '_mbox' => $mbox, '_uid' => $uid));
+                    $this->rc->output->redirect(array(
+                        '_task' => 'mail',
+                        '_action' => $args['action'],
+                        '_mbox' => $mbox,
+                        '_uid' => $uid
+                    ));
                     $this->rc->output->send();
                 }
             }
@@ -89,26 +113,30 @@ class message_label extends rcube_plugin {
                 $args['abort'] = true;
             }
             if ($args['action'] == 'mark') {
-                $flag = get_input_value('_flag', RCUBE_INPUT_POST);
-                $uid = get_input_value('_uid', RCUBE_INPUT_POST);
+                $flag = rcube_utils::get_input_value('_flag', rcube_utils::INPUT_POST);
+                $uid = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
 
                 $post_str = '_flag=' . $flag . '&_uid=' . $uid;
-                if ($quiet = get_input_value('_quiet', RCUBE_INPUT_POST))
+                if ($quiet = rcube_utils::get_input_value('_quiet', rcube_utils::INPUT_POST)) {
                     $post_str .= '&_quiet=' . $quiet;
-                if ($from = get_input_value('_from', RCUBE_INPUT_POST))
+                }
+                if ($from = rcube_utils::get_input_value('_from', rcube_utils::INPUT_POST)) {
                     $post_str .= '&_from=' . $from;
-                if ($count = get_input_value('_count', RCUBE_INPUT_POST))
+                }
+                if ($count = rcube_utils::get_input_value('_count', rcube_utils::INPUT_POST)) {
                     $post_str .= '&_count=' . $count;
-                if ($ruid = get_input_value('_ruid', RCUBE_INPUT_POST))
+                }
+                if ($ruid = rcube_utils::get_input_value('_ruid', rcube_utils::INPUT_POST)) {
                     $post_str .= '&_ruid=' . $ruid;
+                }
 
                 $this->rc->output->command('label_mark', $post_str);
                 $this->rc->output->send();
                 $args['abort'] = true;
             }
             if ($args['action'] == 'moveto') {
-                $target_mbox = get_input_value('_target_mbox', RCUBE_INPUT_POST);
-                $uid = get_input_value('_uid', RCUBE_INPUT_POST);
+                $target_mbox = rcube_utils::get_input_value('_target_mbox', rcube_utils::INPUT_POST);
+                $uid = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
 
                 $post_str = '_uid=' . $uid . '&_target_mbox=' . $target_mbox;
 
@@ -117,7 +145,7 @@ class message_label extends rcube_plugin {
                 $args['abort'] = true;
             }
             if ($args['action'] == 'delete') {
-                $uid = get_input_value('_uid', RCUBE_INPUT_POST);
+                $uid = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
 
                 $post_str = '_uid=' . $uid;
 
@@ -125,7 +153,7 @@ class message_label extends rcube_plugin {
                 $this->rc->output->send();
                 $args['abort'] = true;
             }
-        } else if ($_SESSION['label_folder_search']['uid_mboxes']) {
+        } elseif ($_SESSION['label_folder_search']['uid_mboxes']) {
             // if action is empty then the page has been refreshed
             if (!$args['action']) {
                 $_SESSION['label_folder_search']['uid_mboxes'] = 0;
@@ -140,37 +168,37 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function message_set_label($p) {
+    public function message_set_label($p)
+    {
         $prefs = $this->rc->config->get('message_label', array());
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($prefs, true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($prefs, true)));
 
-        if (!count($prefs) or !isset($p['messages']) or !is_array($p['messages']))
+        if (!count($prefs) or !isset($p['messages']) or !is_array($p['messages'])) {
             return $p;
+        }
 
         foreach ($p['messages'] as $message) {
             $type = 'filter';
             $color = '';
             $ret_key = array();
-            foreach ($prefs as $key => $p) {
-                if ($p['header'] == 'subject') {
-                    $cont = trim(rcube_mime::decode_header($message->$p['header'], $message->charset));
-                } else {
-                    $cont = $message->$p['header'];
-                }
-                if (stristr($cont, $p['input'])) {
+            foreach ($prefs as $key => $pref) {
+                $cont = trim($message->get($pref['header'], true));
+
+                if (stristr($cont, $pref['input'])) {
                     array_push($ret_key, array('id' => $key, 'type' => $type));
                 }
             }
 
-            if (!empty($message->flags))
+            if (!empty($message->flags)) {
                 foreach ($message->flags as $flag => $set_val) {
                     if (stripos($flag, 'ulabels') === 0) {
                         $flag_id = str_ireplace('ulabels_', '', $flag);
                         if (!empty($ret_key)) {
                             foreach ($ret_key as $key_search => $value) {
                                 $id = $value['id'];
-                                if ($prefs[$id]['id'] == strtolower($flag_id) && $value['type'] == 'filter')
+                                if ($prefs[$id]['id'] == strtolower($flag_id) && $value['type'] == 'filter') {
                                     unset($ret_key[$key_search]);
+                                }
                             }
                         }
                     }
@@ -184,8 +212,9 @@ class message_label extends rcube_plugin {
                                 if (!empty($ret_key)) {
                                     foreach ($ret_key as $key_filter => $value_filter) {
                                         $searh_filter = array('id' => $key, 'type' => 'filter');
-                                        if ($value_filter == $searh_filter)
+                                        if ($value_filter == $searh_filter) {
                                             $flabel = $key_filter;
+                                        }
                                     }
                                 }
                                 if ($flabel !== false) {
@@ -197,8 +226,9 @@ class message_label extends rcube_plugin {
                         }
                     }
                 }
+            }
 
-            //write_log('debug', preg_replace('/\r\n$/', '', print_r($ret_key,true)));
+            //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($ret_key,true)));
 
             if (!empty($ret_key)) {
                 sort($ret_key);
@@ -223,11 +253,12 @@ class message_label extends rcube_plugin {
      * set flags when search labels by filter and label
      *
      */
-    function message_label_imap_set() {
-        if (($uids = get_input_value('_uid', RCUBE_INPUT_POST)) && ($flag = get_input_value('_flag', RCUBE_INPUT_POST))) {
+    public function message_label_imap_set()
+    {
+        if (($uids = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST)) && ($flag = rcube_utils::get_input_value('_flag', rcube_utils::INPUT_POST))) {
             $flag = $a_flags_map[$flag] ? $a_flags_map[$flag] : strtoupper($flag);
-            $type = get_input_value('_type', RCUBE_INPUT_POST);
-            $label_search = get_input_value('_label_search', RCUBE_INPUT_POST);
+            $type = rcube_utils::get_input_value('_type', rcube_utils::INPUT_POST);
+            $label_search = rcube_utils::get_input_value('_label_search', rcube_utils::INPUT_POST);
 
             if ($label_search) {
                 $uids = explode(',', $uids);
@@ -240,16 +271,15 @@ class message_label extends rcube_plugin {
                         $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $unlabel);
                         $unfiler = 'U' . $flag;
                         $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $unfiler);
-                    }
-                    else
+                    } else {
                         $marked = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], $flag);
-
+                    }
                     if (!$marked) {
                         // send error message
                         $this->rc->output->show_message('errormarking', 'error');
                         $this->rc->output->send();
-                        exit;
-                    } else if (empty($_POST['_quiet'])) {
+                        exit();
+                    } elseif (empty($_POST['_quiet'])) {
                         $this->rc->output->show_message('messagemarked', 'confirmation');
                     }
                 }
@@ -259,19 +289,19 @@ class message_label extends rcube_plugin {
                     $marked = $this->rc->imap->set_flag($uids, $unlabel);
                     $unfiler = 'U' . $flag;
                     $marked = $this->rc->imap->set_flag($uids, $unfiler);
-                }
-                else
+                } else {
                     $marked = $this->rc->imap->set_flag($uids, $flag);
+                }
 
                 if (!$marked) {
                     // send error message
-                    if ($_POST['_from'] != 'show')
+                    if ($_POST['_from'] != 'show') {
                         $this->rc->output->command('list_mailbox');
-                    rcmail_display_server_error('errormarking');
+                    }
+                    $this->rc->display_server_error('errormarking');
                     $this->rc->output->send();
-                    exit;
-                }
-                else if (empty($_POST['_quiet'])) {
+                    exit();
+                } elseif (empty($_POST['_quiet'])) {
                     $this->rc->output->show_message('messagemarked', 'confirmation');
                 }
             }
@@ -290,19 +320,20 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function message_label_search() {
+    public function message_label_search()
+    {
         // reset list_page and old search results
         $this->rc->imap->set_page(1);
-        $this->rc->imap->set_search_set(NULL);
+        $this->rc->imap->set_search_set(null);
         $_SESSION['page'] = 1;
-        $page = get_input_value('_page', RCUBE_INPUT_POST);
+        $page = rcube_utils::get_input_value('_page', rcube_utils::INPUT_POST);
 
         $page = $page ? $page : 1;
 
-        $id = get_input_value('_id', RCUBE_INPUT_POST);
+        $id = rcube_utils::get_input_value('_id', rcube_utils::INPUT_POST);
 
         // is there a sort type for this request?
-        if ($sort = get_input_value('_sort', RCUBE_INPUT_POST)) {
+        if ($sort = rcube_utils::get_input_value('_sort', rcube_utils::INPUT_POST)) {
             // yes, so set the sort vars
             list($sort_col, $sort_order) = explode('_', $sort);
 
@@ -340,24 +371,24 @@ class message_label extends rcube_plugin {
 
         if ($subject) {
             $search_str .= str_repeat(' OR', count($subject) - 1);
-            foreach ($subject as $sub)
+            foreach ($subject as $sub) {
                 $search_str .= sprintf(" %s {%d}\r\n%s", $sub, strlen($search), $search);
+            }
             $_SESSION['search_mods'] = $subject;
         }
 
         $search_str = trim($search_str);
         $count = 0;
-        $result_h = Array();
+        $result_h = array();
         $tmp_page_size = $this->rc->storage->get_pagesize();
-        //$this->rc->imap->page_size = 500;
 
-        if ($use_saved_list && $_SESSION['all_folder_search']['uid_mboxes'])
+        if ($use_saved_list && $_SESSION['all_folder_search']['uid_mboxes']) {
             $result_h = $this->get_search_result();
-        else
+        } else {
             $result_h = $this->perform_search($search_str, $folders, $id);
+        }
 
         $this->rc->output->set_env('label_folder_search_active', 1);
-        //$this->rc->imap->page_size = $tmp_page_size;
         $count = count($result_h);
 
         $this->sort_search_result($result_h);
@@ -367,12 +398,12 @@ class message_label extends rcube_plugin {
         // Make sure we got the headers
         if (!empty($result_h)) {
             rcmail_js_message_list($result_h, false);
-            if ($search_str)
+            if ($search_str) {
                 $this->rc->output->show_message('searchsuccessful', 'confirmation', array('nr' => $count));
-        }
-        // handle IMAP errors (e.g. #1486905)
-        else if ($err_code = $this->rc->imap->get_error_code()) {
-            rcmail_display_server_error();
+            }
+        } // handle IMAP errors (e.g. #1486905)
+        elseif ($err_code = $this->rc->imap->get_error_code()) {
+            $this->rc->display_server_error();
         } else {
             $this->rc->output->show_message('searchnomatch', 'notice');
         }
@@ -382,23 +413,24 @@ class message_label extends rcube_plugin {
         $this->rc->output->set_env('search_labels', $id);
         $this->rc->output->set_env('messagecount', $count);
         $this->rc->output->set_env('pagecount', ceil($count / $this->rc->storage->get_pagesize()));
-        $this->rc->output->set_env('threading', (bool) false);
+        $this->rc->output->set_env('threading', (bool)false);
         $this->rc->output->set_env('threads', 0);
 
         $this->rc->output->command('set_rowcount', rcmail_get_messagecount_text($count, $page));
 
         $this->rc->output->send();
-        exit;
+        exit();
     }
 
     /**
      * Perform the all folder search
      *
      * @param   string   Search string
-     * @return  array    Indexed array with message header objects
+     * @return  array   Indexed array with message header objects
      * @access  private
      */
-    private function perform_search($search_string, $folders, $label_id) {
+    private function perform_search($search_string, $folders, $label_id)
+    {
         $result_h = array();
         $uid_mboxes = array();
         $id = 1;
@@ -408,15 +440,16 @@ class message_label extends rcube_plugin {
         $search_string_label = 'KEYWORD "$labels_' . $label_id . '"';
 
         // Search all folders and build a final set
-        if ($folders[0] == 'all' || empty($folders))
+        if ($folders[0] == 'all' || empty($folders)) {
             $folders_search = $this->rc->imap->list_folders_subscribed();
-        else
+        } else {
             $folders_search = $folders;
+        }
 
         foreach ($folders_search as $mbox) {
-
-            if ($mbox == $this->rc->config->get('trash_mbox'))
+            if ($mbox == $this->rc->config->get('trash_mbox')) {
                 continue;
+            }
 
             $this->rc->storage->set_folder($mbox);
 
@@ -426,17 +459,20 @@ class message_label extends rcube_plugin {
             $this->rc->storage->search($mbox, $search_string_label, RCMAIL_CHARSET, $_SESSION['sort_col']);
             $result_label = $this->rc->storage->list_messages($mbox, 1, $_SESSION['sort_col'], $_SESSION['sort_order']);
 
-            if (!empty($result_label))
+            if (!empty($result_label)) {
                 foreach ($result_label as $header_obj) {
                     $add = true;
-                    foreach ($result as $result_obj)
+                    foreach ($result as $result_obj) {
                         if ($result_obj->id == $header_obj->id) {
                             $add = false;
                             break;
                         }
-                    if ($add)
+                    }
+                    if ($add) {
                         array_push($result, $header_obj);
+                    }
                 }
+            }
 
             foreach ($result as $row) {
                 $uid_mboxes[$id] = array('uid' => $row->uid, 'mbox' => $mbox);
@@ -444,22 +480,24 @@ class message_label extends rcube_plugin {
                 $add_res = 1;
                 $add_labels = 0;
 
-                if (!empty($row->flags))
+                if (!empty($row->flags)) {
                     foreach ($row->flags as $flag => $set_val) {
                         if ($flag == strtoupper('ulabels_' . $label_id)) {
                             $add_res = 0;
                             break;
                         }
                     }
+                }
                 if ($add_res) {
                     $result_h[] = $row;
                     $id++;
                 } else {
-                    foreach ($row->flags as $flag => $set_val)
+                    foreach ($row->flags as $flag => $set_val) {
                         if ($flag == strtoupper('labels_' . $label_id)) {
                             $add_labels = 1;
                             break;
                         }
+                    }
                     if ($add_labels) {
                         $result_h[] = $row;
                         $id++;
@@ -472,7 +510,7 @@ class message_label extends rcube_plugin {
             $set_flag->flags['skip_mbox_check'] = true;
         }
 
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($result_h,true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($result_h,true)));
 
         $_SESSION['label_folder_search']['uid_mboxes'] = $uid_mboxes;
         $this->rc->output->set_env('label_folder_search_uid_mboxes', $uid_mboxes);
@@ -483,15 +521,17 @@ class message_label extends rcube_plugin {
     /**
      * Slice message header array to return only the messages corresponding the page parameter
      *
-     * @param   array    Indexed array with message header objects
-     * @param   int      Current page to list
-     * @return  array    Sliced array with message header objects
+     * @param   array   Indexed array with message header objects
+     * @param   int   Current page to list
+     * @return  array   Sliced array with message header objects
      * @access  public
      */
-    function get_paged_result($result_h, $page) {
+    public function get_paged_result($result_h, $page)
+    {
         // Apply page size rules
-        if (count($result_h) > $this->rc->storage->get_pagesize())
+        if (count($result_h) > $this->rc->storage->get_pagesize()) {
             $result_h = array_slice($result_h, ($page - 1) * $this->rc->storage->get_pagesize(), $this->rc->storage->get_pagesize());
+        }
 
         return $result_h;
     }
@@ -501,18 +541,18 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function message_label_mark() {
-
+    public function message_label_mark()
+    {
         $a_flags_map = array(
             'undelete' => 'UNDELETED',
             'delete' => 'DELETED',
             'read' => 'SEEN',
             'unread' => 'UNSEEN',
             'flagged' => 'FLAGGED',
-            'unflagged' => 'UNFLAGGED');
+            'unflagged' => 'UNFLAGGED'
+        );
 
-        if (($uids = get_input_value('_uid', RCUBE_INPUT_POST)) && ($flag = get_input_value('_flag', RCUBE_INPUT_POST))) {
-
+        if (($uids = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST)) && ($flag = rcube_utils::get_input_value('_flag', rcube_utils::INPUT_POST))) {
             $flag = $a_flags_map[$flag] ? $a_flags_map[$flag] : strtoupper($flag);
 
             if ($flag == 'DELETED' && $this->rc->config->get('skip_deleted') && $_POST['_from'] != 'show') {
@@ -532,14 +572,14 @@ class message_label extends rcube_plugin {
 
                 if (!$marked) {
                     // send error message
-                    if ($_POST['_from'] != 'show')
+                    if ($_POST['_from'] != 'show') {
                         $this->rc->output->command('list_mailbox');
+                    }
 
                     $this->rc->output->show_message('errormarking', 'error');
                     $this->rc->output->send();
-                    exit;
-                }
-                else if (empty($_POST['_quiet'])) {
+                    exit();
+                } elseif (empty($_POST['_quiet'])) {
                     $this->rc->output->show_message('messagemarked', 'confirmation');
                 }
             }
@@ -548,7 +588,7 @@ class message_label extends rcube_plugin {
             $read_when_deleted = $this->rc->config->get('read_when_deleted');
 
             if ($flag == 'DELETED' && $read_when_deleted && !empty($_POST['_ruid'])) {
-                $uids = get_input_value('_ruid', RCUBE_INPUT_POST);
+                $uids = rcube_utils::get_input_value('_ruid', rcube_utils::INPUT_POST);
                 $uids = explode(',', $uids);
 
                 foreach ($uids as $uid) {
@@ -556,8 +596,9 @@ class message_label extends rcube_plugin {
                     $this->rc->storage->set_folder($mbox);
                     $read = $this->rc->imap->set_flag($_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'], 'SEEN');
 
-                    if ($read != -1 && !$skip_deleted)
+                    if ($read != -1 && !$skip_deleted) {
                         $this->rc->output->command('flag_deleted_as_read', $uid);
+                    }
                 }
             }
 
@@ -565,17 +606,19 @@ class message_label extends rcube_plugin {
                 // just update unread count for all mailboxes, easier than figuring out which were changed
                 $mbox_names = $this->rc->storage->list_folders_subscribed();
 
-                foreach ($mbox_names as $mbox)
+                foreach ($mbox_names as $mbox) {
                     $this->rc->output->command('set_unread_count', $mbox, $this->rc->imap->messagecount($mbox, 'UNSEEN'), ($mbox == 'INBOX'));
-            } else if ($flag == 'DELETED' && $skip_deleted) {
+                }
+            } elseif ($flag == 'DELETED' && $skip_deleted) {
                 if ($_POST['_from'] == 'show') {
-                    if ($next = get_input_value('_next_uid', RCUBE_INPUT_GPC))
+                    if ($next = rcube_utils::get_input_value('_next_uid', RCUBE_INPUT_GPC)) {
                         $this->rc->output->command('show_message', $next);
-                    else
+                    } else {
                         $this->rc->output->command('command', 'list');
+                    }
                 } else {
                     // refresh saved search set after moving some messages
-                    if (($search_request = get_input_value('_search', RCUBE_INPUT_GPC)) && $_SESSION['label_folder_search']['uid_mboxes']) {
+                    if (($search_request = rcube_utils::get_input_value('_search', RCUBE_INPUT_GPC)) && $_SESSION['label_folder_search']['uid_mboxes']) {
                         $_SESSION['search'][$search_request] = $this->perform_search($this->rc->imap->search_string);
                     }
                     $msg_count = count($_SESSION['label_folder_search']['uid_mboxes']);
@@ -597,7 +640,7 @@ class message_label extends rcube_plugin {
                         $unseen_count = $msg_count ? $this->rc->imap->messagecount($mbox, 'UNSEEN') : 0;
                         $this->rc->output->command('set_unread_count', $mbox, $unseen_count, ($mbox == 'INBOX'));
                     }
-                    $this->rc->output->command('set_rowcount', rcmail_get_messagecount_text($msg_count));
+                    $this->rc->output->command('set_rowcount', $this->rc->get_messagecount_text($msg_count));
 
                     // add new rows from next page (if any)
                     if (($jump_back || $nextpage_count > 0)) {
@@ -607,22 +650,23 @@ class message_label extends rcube_plugin {
                         $a_headers = $this->get_search_result();
                         $this->sort_search_result($a_headers);
                         $a_headers = array_slice($a_headers, $sort_order == 'DESC' ? 0 : -$count, $count);
-                        rcmail_js_message_list($a_headers, false, false);
+                        $this->rc->js_message_list($a_headers, false, false);
                     }
                 }
             }
             $this->rc->output->send();
         }
-        exit;
+        exit();
     }
 
     /**
      * Get message header results for the current all folder search
      *
-     * @return  array    Indexed array with message header objects
+     * @return  array   Indexed array with message header objects
      * @access  public
      */
-    function get_search_result() {
+    public function get_search_result()
+    {
         $result_h = array();
 
         foreach ($_SESSION['label_folder_search']['uid_mboxes'] as $id => $uid_mbox) {
@@ -641,10 +685,11 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function message_label_move() {
+    public function message_label_move()
+    {
         if (!empty($_POST['_uid']) && !empty($_POST['_target_mbox'])) {
-            $uids = get_input_value('_uid', RCUBE_INPUT_POST);
-            $target = get_input_value('_target_mbox', RCUBE_INPUT_POST);
+            $uids = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
+            $target = rcube_utils::get_input_value('_target_mbox', rcube_utils::INPUT_POST);
             $uids = explode(',', $uids);
 
             foreach ($uids as $uid) {
@@ -653,26 +698,27 @@ class message_label extends rcube_plugin {
                 $ruid = $_SESSION['label_folder_search']['uid_mboxes'][$uid]['uid'];
 
                 // flag messages as read before moving them
-                if ($this->rc->config->get('read_when_deleted') && $target == $this->rc->config->get('trash_mbox'))
+                if ($this->rc->config->get('read_when_deleted') && $target == $this->rc->config->get('trash_mbox')) {
                     $this->rc->imap->set_flag($ruid, 'SEEN');
+                }
 
                 $moved = $this->rc->imap->move_message($ruid, $target, $mbox);
             }
 
             if (!$moved) {
                 // send error message
-                if ($_POST['_from'] != 'show')
+                if ($_POST['_from'] != 'show') {
                     $this->rc->output->command('list_mailbox');
+                }
 
                 $this->rc->output->show_message('errormoving', 'error');
                 $this->rc->output->send();
-                exit;
-            }
-            else {
+                exit();
+            } else {
                 $this->rc->output->command('list_mailbox');
                 $this->rc->output->show_message('messagemoved', 'confirmation');
                 $this->rc->output->send();
-                exit;
+                exit();
             }
         }
     }
@@ -682,9 +728,10 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function message_label_delete() {
+    public function message_label_delete()
+    {
         if (!empty($_POST['_uid'])) {
-            $uids = get_input_value('_uid', RCUBE_INPUT_POST);
+            $uids = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
             $uids = explode(',', $uids);
 
             foreach ($uids as $uid) {
@@ -697,18 +744,18 @@ class message_label extends rcube_plugin {
 
             if (!$del) {
                 // send error message
-                if ($_POST['_from'] != 'show')
+                if ($_POST['_from'] != 'show') {
                     $this->rc->output->command('list_mailbox');
+                }
 
-                rcmail_display_server_error('errordeleting');
+                $this->rc->display_server_error('errordeleting');
                 $this->rc->output->send();
-                exit;
-            }
-            else {
+                exit();
+            } else {
                 $this->rc->output->command('list_mailbox');
                 $this->rc->output->show_message('messagedeleted', 'confirmation');
                 $this->rc->output->send();
-                exit;
+                exit();
             }
         }
     }
@@ -720,7 +767,8 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function not_label_folder_search() {
+    public function not_label_folder_search()
+    {
         $_SESSION['label_folder_search']['uid_mboxes'] = 0;
         $_SESSION['label_id'] = 0;
     }
@@ -728,26 +776,31 @@ class message_label extends rcube_plugin {
     /**
      * Sort result header array by date, size, subject, or from using a bubble sort
      *
-     * @param   array    Indexed array with message header objects
+     * @param   array   Indexed array with message header objects
      * @access  private
      */
-    private function sort_search_result(&$result_h) {
+    private function sort_search_result(&$result_h)
+    {
         // Bubble sort! <3333 (ideally sorting and page trimming should be done
-        // in js but php has the convienent rcmail_js_message_list function
+        // in js but php has the convienent rcmail::js_message_list function
         for ($x = 0; $x < count($result_h); $x++) {
             for ($y = 0; $y < count($result_h); $y++) {
                 // ick can a variable name be put into a variable so i can get this out of 2 loops
                 switch ($_SESSION['sort_col']) {
-                    case 'date': $first = $result_h[$x]->timestamp;
+                    case 'date':
+                        $first = $result_h[$x]->timestamp;
                         $second = $result_h[$y]->timestamp;
                         break;
-                    case 'size': $first = $result_h[$x]->size;
+                    case 'size':
+                        $first = $result_h[$x]->size;
                         $second = $result_h[$y]->size;
                         break;
-                    case 'subject': $first = strtolower($result_h[$x]->subject);
+                    case 'subject':
+                        $first = strtolower($result_h[$x]->subject);
                         $second = strtolower($result_h[$y]->subject);
                         break;
-                    case 'from': $first = strtolower($result_h[$x]->from);
+                    case 'from':
+                        $first = strtolower($result_h[$x]->from);
                         $second = strtolower($result_h[$y]->from);
                         break;
                 }
@@ -760,8 +813,9 @@ class message_label extends rcube_plugin {
             }
         }
 
-        if ($_SESSION['sort_order'] == 'DESC')
+        if ($_SESSION['sort_order'] == 'DESC') {
             $result_h = array_reverse($result_h);
+        }
     }
 
     /**
@@ -769,14 +823,16 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function message_label_redirect() {
+    public function message_label_redirect()
+    {
         $this->rc->output->redirect(array('_task' => 'settings', '_action' => 'label_preferences'));
     }
 
     /**
      * render labbel menu for markmessagemenu
      */
-    function render_labels_menu($val) {
+    public function render_labels_menu($val)
+    {
         $prefs = $this->rc->config->get('message_label', array());
         $input = new html_checkbox();
         if (count($prefs) > 0) {
@@ -785,9 +841,13 @@ class message_label extends rcube_plugin {
 
             foreach ($prefs as $p) {
                 $ul .= html::tag('li', null, html::a(
-                                        array('class' => 'labellink active',
-                                    'href' => '#',
-                                    'onclick' => 'rcmail.label_messages(\'' . $p['id'] . '\')'), html::tag('span', array('class' => 'listmenu', 'style' => 'background-color:' . $p['color']), '') . $p['text']));
+                    array(
+                        'class' => 'labellink active',
+                        'href' => '#',
+                        'onclick' => 'rcmail.label_messages(\'' . $p['id'] . '\')'
+                    ),
+                    html::tag('span', array('class' => 'listmenu', 'style' => 'background-color:' . $p['color']), '') . $p['text']
+                ));
             }
 
             $out = html::tag('ul', $attrib, $ul, html::$common_attrib);
@@ -801,17 +861,19 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function folder_list_label($args) {
-
+    public function folder_list_label($args)
+    {
         $args['content'] .= html::div(array('id' => 'labels-title', 'class' => 'boxtitle label_header_menu'), $this->gettext('label_title') . html::tag('span', array('class' => 'drop_arrow'), ''));
         $prefs = $this->rc->config->get('message_label', array());
 
-        if (!strlen($attrib['id']))
+        if (!strlen($attrib['id'])) {
             $attrib['id'] = 'labellist';
+        }
 
         $display_label = $this->rc->config->get('message_label_display');
-        if ($display_label == 'false')
+        if ($display_label == 'false') {
             $style = 'display: none;';
+        }
 
         if (count($prefs) > 0) {
             $table = new html_table($attrib);
@@ -831,22 +893,24 @@ class message_label extends rcube_plugin {
         }
 
         $this->rc->imap->conn->flags = array_merge($this->rc->imap->conn->flags, $flags);
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($this->rc->imap->conn->flags,true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($this->rc->imap->conn->flags,true)));
+
         // add id to message label table if not specified
         $this->rc->output->add_gui_object('labellist', $attrib['id']);
 
         return $args;
     }
 
-    function display_list_preferences() {
-        $display_label = get_input_value('_display_label', RCUBE_INPUT_POST);
-        $display_folder = get_input_value('_display_folder', RCUBE_INPUT_POST);
+    public function display_list_preferences()
+    {
+        $display_label = rcube_utils::get_input_value('_display_label', rcube_utils::INPUT_POST);
+        $display_folder = rcube_utils::get_input_value('_display_folder', rcube_utils::INPUT_POST);
 
-        if (!empty($display_label)) {
+        if (empty($display_label) === false) {
             if ($display_label == 'true') {
                 $this->rc->user->save_prefs(array('message_label_display' => 'true'));
                 $this->rc->output->command('display_message', $this->gettext('display_label_on'), 'confirmation');
-            } else if ($display_label == 'false') {
+            } elseif ($display_label == 'false') {
                 $this->rc->user->save_prefs(array('message_label_display' => 'false'));
                 $this->rc->output->command('display_message', $this->gettext('display_label_off'), 'confirmation');
             } else {
@@ -856,7 +920,8 @@ class message_label extends rcube_plugin {
         }
     }
 
-    function flag_message_load($p) {
+    public function flag_message_load($p)
+    {
         $prefs = $this->rc->config->get('message_label', array());
         $flags = array();
         foreach ($prefs as $prefs_val) {
@@ -871,14 +936,14 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function label_preferences($args) {
+    public function label_preferences($args)
+    {
         if ($args['section'] == 'label_preferences') {
-
             $this->rc = rcmail::get_instance();
-            $this->rc->imap_connect();
+            $this->rc->storage_connect();
 
-            $args['blocks']['create_label'] = array('options' => array(), 'name' => Q($this->gettext('label_create')));
-            $args['blocks']['list_label'] = array('options' => array(), 'name' => Q($this->gettext('label_title')));
+            $args['blocks']['create_label'] = array('options' => array(), 'name' => rcube::Q($this->gettext('label_create')));
+            $args['blocks']['list_label'] = array('options' => array(), 'name' => rcube::Q($this->gettext('label_title')));
 
             $i = 0;
             $prefs = $this->rc->config->get('message_label', array());
@@ -893,7 +958,7 @@ class message_label extends rcube_plugin {
                 );
             }
         }
-        return($args);
+        return ($args);
     }
 
     /**
@@ -901,24 +966,27 @@ class message_label extends rcube_plugin {
      *
      * @access  private
      */
-    private function get_form_row($id = '', $header = 'from', $folder = 'all', $input = '', $color = '#000000', $text = '', $delete = false) {
-
+    private function get_form_row($id = '', $header = 'from', $folder = 'all', $input = '', $color = '#000000', $text = '', $delete = false)
+    {
         $this->add_texts('localization');
 
-        if (!$text)
-            $text = Q($this->gettext('label_name'));
-        //if (!$input) $input = Q($this->gettext('label_matches'));
-        if (!$id)
+        if (!$text) {
+            $text = rcube::Q($this->gettext('label_name'));
+        }
+
+        if (!$id) {
             $id = uniqid();
-        if (!$folder)
+        }
+        if (!$folder) {
             $folder = 'all';
+        }
 
         // header select box
         $header_select = new html_select(array('name' => '_label_header[]', 'class' => 'label_header'));
-        $header_select->add(Q($this->gettext('subject')), 'subject');
-        $header_select->add(Q($this->gettext('from')), 'from');
-        $header_select->add(Q($this->gettext('to')), 'to');
-        $header_select->add(Q($this->gettext('cc')), 'cc');
+        $header_select->add(rcube::Q($this->gettext('subject')), 'subject');
+        $header_select->add(rcube::Q($this->gettext('from')), 'from');
+        $header_select->add(rcube::Q($this->gettext('to')), 'to');
+        $header_select->add(rcube::Q($this->gettext('cc')), 'cc');
 
         // folder search select
         $folder_search = new html_select(array('name' => '_folder_search[]', 'class' => 'folder_search'));
@@ -930,19 +998,44 @@ class message_label extends rcube_plugin {
         $delimiter = $this->rc->storage->get_hierarchy_delimiter();
         $a_mailboxes = array();
 
-        foreach ($a_folders as $folder_list)
-            rcmail_build_folder_tree($a_mailboxes, $folder_list, $delimiter);
+        foreach ($a_folders as $folder_list) {
+            $this->rc->build_folder_tree($a_mailboxes, $folder_list, $delimiter);
+        }
 
-        $folder_search->add(Q($this->gettext('label_all')), 'all');
+        $folder_search->add(rcube::Q($this->gettext('label_all')), 'all');
 
-        rcmail_render_folder_tree_select($a_mailboxes, $mbox, $p['maxlength'], $folder_search, $p['realnames']);
+        $this->rc->render_folder_tree_select($a_mailboxes, $mbox, $p['maxlength'], $folder_search, $p['realnames']);
 
         // input field
         $search_info_text = $this->gettext('search_info');
-        $input = new html_inputfield(array('name' => '_label_input[]', 'type' => 'text', 'autocomplete' => 'off', 'class' => 'watermark linput', 'value' => $input));
-        $text = html::tag('input', array('name' => '_label_text[]', 'type' => 'text', 'title' => $search_info_text, 'class' => 'watermark linput', 'value' => $text));
-        $select_color = html::tag('input', array('id' => $id, 'name' => '_label_color[]', 'type' => 'hidden', 'text' => 'hidden', 'class' => 'label_color_input', 'value' => $color));
-        $id_field = html::tag('input', array('name' => '_label_id[]', 'type' => 'hidden', 'value' => $id));
+        $input = new html_inputfield(array(
+            'name' => '_label_input[]',
+            'type' => 'text',
+            'autocomplete' => 'off',
+            'class' => 'watermark linput',
+            'value' => $input,
+            'placeholder' => $this->gettext('label_matches')
+        ));
+        $text = html::tag('input', array(
+            'name' => '_label_text[]',
+            'type' => 'text',
+            'title' => $search_info_text,
+            'class' => 'watermark linput',
+            'value' => $text
+        ));
+        $select_color = html::tag('input', array(
+            'id' => $id,
+            'name' => '_label_color[]',
+            'type' => 'hidden',
+            'text' => 'hidden',
+            'class' => 'label_color_input',
+            'value' => $color
+        ));
+        $id_field = html::tag('input', array(
+            'name' => '_label_id[]',
+            'type' => 'hidden',
+            'value' => $id
+        ));
 
         if (!$delete) {
             $button = html::a(array('href' => '#cc', 'class' => 'lhref', 'onclick' => 'return rcmail.command(\'save\',\'\',this)'), $this->gettext('add_row'));
@@ -951,14 +1044,13 @@ class message_label extends rcube_plugin {
         }
 
         $content = $select_color . "&nbsp;" .
-                $text . "&nbsp;" .
-                $header_select->show($header) . "&nbsp;" .
-                $this->gettext('label_matches') . "&nbsp;" .
-                $input->show() . "&nbsp;" .
-                $id_field . "&nbsp;" .
-                $this->gettext('label_folder') . "&nbsp;" .
-                $folder_search->show($folder) . "&nbsp;" .
-                $button;
+            $text . "&nbsp;" .
+            $header_select->show($header) . "&nbsp;" .
+            $input->show() . "&nbsp;" .
+            $id_field . "&nbsp;" .
+            $this->gettext('label_folder') . "&nbsp;" .
+            $folder_search->show($folder) . "&nbsp;" .
+            $button;
 
         return $content;
     }
@@ -968,12 +1060,13 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function preferences_section_list($args) {
+    public function preferences_section_list($args)
+    {
         $args['list']['label_preferences'] = array(
             'id' => 'label_preferences',
-            'section' => Q($this->gettext('label_title'))
+            'section' => rcube::Q($this->gettext('label_title'))
         );
-        return($args);
+        return ($args);
     }
 
     /**
@@ -981,20 +1074,22 @@ class message_label extends rcube_plugin {
      *
      * @access  public
      */
-    function label_save($args) {
-        if ($args['section'] != 'label_preferences')
+    public function label_save($args)
+    {
+        if ($args['section'] != 'label_preferences') {
             return;
+        }
 
         $rcmail = rcmail::get_instance();
 
-        $id = get_input_value('_label_id', RCUBE_INPUT_POST);
-        $header = get_input_value('_label_header', RCUBE_INPUT_POST);
-        $folder = get_input_value('_folder_search', RCUBE_INPUT_POST);
-        $input = get_input_value('_label_input', RCUBE_INPUT_POST);
-        $color = get_input_value('_label_color', RCUBE_INPUT_POST);
-        $text = get_input_value('_label_text', RCUBE_INPUT_POST);
+        $id = rcube_utils::get_input_value('_label_id', rcube_utils::INPUT_POST);
+        $header = rcube_utils::get_input_value('_label_header', rcube_utils::INPUT_POST);
+        $folder = rcube_utils::get_input_value('_folder_search', rcube_utils::INPUT_POST);
+        $input = rcube_utils::get_input_value('_label_input', rcube_utils::INPUT_POST);
+        $color = rcube_utils::get_input_value('_label_color', rcube_utils::INPUT_POST);
+        $text = rcube_utils::get_input_value('_label_text', rcube_utils::INPUT_POST);
 
-        //write_log('debug', preg_replace('/\r\n$/', '', print_r($_POST,true)));
+        //rcube::write_log('debug', preg_replace('/\r\n$/', '', print_r($_POST,true)));
 
         for ($i = 0; $i < count($header); $i++) {
             if (!in_array($header[$i], array('subject', 'from', 'to', 'cc'))) {
@@ -1008,15 +1103,23 @@ class message_label extends rcube_plugin {
             if ($input[$i] == '') {
                 continue;
             }
-            $prefs[] = array('id' => $id[$i], 'header' => $header[$i], 'folder' => $folder[$i], 'input' => $input[$i], 'color' => $color[$i], 'text' => $text[$i]);
+            $prefs[] = array(
+                'id' => $id[$i],
+                'header' => $header[$i],
+                'folder' => $folder[$i],
+                'input' => $input[$i],
+                'color' => $color[$i],
+                'text' => $text[$i]
+            );
         }
 
         $args['prefs']['message_label'] = $prefs;
-        return($args);
+        return ($args);
     }
 
-    function action_check_mode() {
-        $check = get_input_value('_check', RCUBE_INPUT_POST);
+    public function action_check_mode()
+    {
+        $check = rcube_utils::get_input_value('_check', rcube_utils::INPUT_POST);
         $this->rc = rcmail::get_instance();
 
         $mode = $this->rc->config->get('message_label_mode');
@@ -1024,7 +1127,7 @@ class message_label extends rcube_plugin {
         if ($check == 'highlighting') {
             $this->rc->user->save_prefs(array('message_label_mode' => 'highlighting'));
             $this->rc->output->command('display_message', $this->gettext('check_highlighting'), 'confirmation');
-        } else if ($check == 'labels') {
+        } elseif ($check == 'labels') {
             $this->rc->user->save_prefs(array('message_label_mode' => 'labels'));
             $this->rc->output->command('display_message', $this->gettext('check_labels'), 'confirmation');
         } else {
@@ -1032,7 +1135,4 @@ class message_label extends rcube_plugin {
         }
         $this->rc->output->send();
     }
-
 }
-
-?>
