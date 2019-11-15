@@ -309,7 +309,8 @@ $(document).ready(function(){
 	if (rcmail.gui_objects.sectionslist && (rcmail.env.action == 'label_preferences')) {
 		section_select_init('label_preferences');
 	}
-	$("#markmessagemenu").append($(".labellistmenu"));
+	$("#markmessage-menu").append($("#message_label_content"));
+	$("#markmessagemenu").append($("#message_label_content"));
 
 	var showOrHide;
 

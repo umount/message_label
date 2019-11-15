@@ -834,9 +834,16 @@ class message_label extends rcube_plugin
     public function render_labels_menu($val)
     {
         $prefs = $this->rc->config->get('message_label', array());
-        $input = new html_checkbox();
         if (count($prefs) > 0) {
-            $attrib['class'] = 'toolbarmenu labellistmenu';
+            $skin = $this->local_skin_path();
+            if(strpos($skin, 'larry') !== false)
+            {
+                $attrib['class'] = 'toolbarmenu labellistmenu';
+            }
+            else{
+                $attrib['class'] = 'menu listing';
+            }
+
             $ul .= html::tag('li', array('class' => 'separator_below'), $this->gettext('label_set'));
 
             foreach ($prefs as $p) {
@@ -844,13 +851,14 @@ class message_label extends rcube_plugin
                     array(
                         'class' => 'labellink active',
                         'href' => '#',
+
                         'onclick' => 'rcmail.label_messages(\'' . $p['id'] . '\')'
                     ),
                     html::tag('span', array('class' => 'listmenu', 'style' => 'background-color:' . $p['color']), '') . $p['text']
                 ));
             }
 
-            $out = html::tag('ul', $attrib, $ul, html::$common_attrib);
+            $out = html::tag('div', array('id' => 'message_label_content'), html::tag('ul', $attrib, $ul, html::$common_attrib));
         }
 
         $this->rc->output->add_footer($out);
