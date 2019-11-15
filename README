@@ -5,7 +5,7 @@ For version < 0.8 use version plugin (1.0)
 
 Install
 -------------------------------------------
-1. git clone https://github.com/oygron/message_label.git message_label
+1. git clone https://github.com/binsentsu/message_label.git message_label
 2. move folder message_label in roundcube plugin folder
 3. add 'message_label' to $rcmail_config['plugins'] in your RoundCube config
 

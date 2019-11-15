@@ -1,12 +1,12 @@
 {
-    "name": "Oygron/message_label",
+    "name": "binsentsu/message_label",
     "type": "roundcube-plugin",
     "keywords": ["mail","labels","tags"],
     "license": "BSD-2-Clause",
     "authors": [
         {
-            "name": "Oygron",
-            "homepage": "https://github.com/Oygron/message_label",
+            "name": "Binsentsu",
+            "homepage": "https://github.com/binsentsu/message_label",
             "role": "Developer"
         }
     ],
